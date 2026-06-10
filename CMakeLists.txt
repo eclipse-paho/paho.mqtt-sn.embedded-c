@@ -1,5 +1,5 @@
 #*******************************************************************************
-#  Copyright (c) 2017 IBM Corp.
+#  Copyright (c) 2017, 2026 IBM Corp., Ian Craggs
 #
 #  All rights reserved. This program and the accompanying materials
 #  are made available under the terms of the Eclipse Public License v1.0
@@ -14,7 +14,7 @@
 #     Ian Craggs - initial version
 #*******************************************************************************/
 
-CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
 PROJECT("paho-mqttsn" CXX)
 MESSAGE(STATUS "CMake version: " ${CMAKE_VERSION})
 MESSAGE(STATUS "CMake system name: " ${CMAKE_SYSTEM_NAME})
@@ -39,4 +39,5 @@ INCLUDE(CPack)
 ENABLE_TESTING()
 
 ADD_SUBDIRECTORY(MQTTSNPacket)
+ADD_SUBDIRECTORY(MQTTSN2Packet)
 ADD_SUBDIRECTORY(MQTTSNGateway)
