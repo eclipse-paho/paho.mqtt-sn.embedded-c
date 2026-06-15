@@ -19,6 +19,15 @@ PROJECT(mqtt-sn2-tests)
 INCLUDE_DIRECTORIES(../src)
 
 ADD_EXECUTABLE(
+        test_connect
+        test_connect.c
+)
+
+TARGET_LINK_LIBRARIES(test_connect MQTTSN2Packet)
+
+ADD_TEST(NAME test_connect COMMAND test_connect)
+
+ADD_EXECUTABLE(
   test_publish
   test_publish.c
 )

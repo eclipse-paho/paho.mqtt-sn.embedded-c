@@ -10,14 +10,22 @@
  * and the Eclipse Distribution License is available at
  *   http://www.eclipse.org/org/documents/edl-v10.php.
  *
+ * AI Disclosure: This file was partly AI-generated. The AI-generated
+ * portions are made available under CC0-1.0 and not subject to the
+ * project's licence. The human contributor has reviewed and verified
+ * that the code is correct.
+ *
+ * SPDX-License-Identifier: EPL-2.0 and CC0-1.0
+ *
  * Contributors:
  *    Ian Craggs - initial API and implementation and/or initial documentation
+ *    Updated for MQTT-SN 2.0 (Committee Specification Draft 01, October 2025)
  *******************************************************************************/
 
 #ifndef MQTTSNCONNECT_H_
 #define MQTTSNCONNECT_H_
 
-/* The CONNECT, CONNACK, PING and DISCONNECT header file for MQTTSN 2.0 */
+/* The CONNECT, CONNACK, PING and DISCONNECT header file for MQTT-SN 2.0 */
 
 #include "MQTTSNPacket.h"
 
@@ -57,7 +65,7 @@ union MQTTSNPacket_willFlags
 {
 	uint8_t all;
 #if defined(REVERSED)
-	struct bits
+	struct willFlagsBits
 	{
 		uint8_t reserved : 3;
 		bool retain : 1;
@@ -73,7 +81,7 @@ union MQTTSNPacket_willFlags
 		uint8_t reserved : 3;
 	} bits;
 #endif
-} MQTTSN_willFlags;
+};
 
 typedef struct MQTTSNPacket_connectData MQTTSNPacket_connectData;
 struct MQTTSNPacket_connectData
@@ -122,7 +130,7 @@ union MQTTSNPacket_connackFlags
 		uint8_t reserved : 4;
 	} bits;
 #endif
-} MQTTSN_connackFlags;
+};
 
 typedef struct MQTTSNPacket_connackData MQTTSNPacket_connackData;
 struct MQTTSNPacket_connackData
@@ -130,26 +138,102 @@ struct MQTTSNPacket_connackData
 	MQTTSNPacket_connackFlags flags;
 	uint16_t packetId;
 	uint8_t reasonCode;
-	/* optional fields follow */
+	/* optional fields — written/read only when their flag bit is set */
 	uint32_t sessionExpiryInterval;
 	uint16_t serverKeepAlive;
-	struct auth auth;
-	MQTTSN_string assignedClientID;
-} MQTTSN_connackData;
+	struct {
+		MQTTSN_string method; /**< single byte length */
+		MQTTSN_data   data;
+	} auth;
+	MQTTSN_string assignedClientID; /**< fills to end; inferred from length */
+};
 
-int MQTTSNSerialize_connect(unsigned char* buf, int buflen, MQTTSNPacket_connectData* options);
-int MQTTSNDeserialize_connect(MQTTSNPacket_connectData* data, unsigned char* buf, int len);
+typedef union MQTTSNPacket_disconnectFlags MQTTSNPacket_disconnectFlags;
+union MQTTSNPacket_disconnectFlags
+{
+	uint8_t all;
+#if defined(REVERSED)
+	struct disconnectFlagsBits
+	{
+		uint8_t reserved : 5;
+		bool reasonCode : 1;
+		bool sessionExpiryInterval : 1;
+		bool packetId : 1;
+	} bits;
+#else
+	struct disconnectFlagsBits
+	{
+		bool packetId : 1;              /**< bit 0 */
+		bool sessionExpiryInterval : 1; /**< bit 1 */
+		bool reasonCode : 1;            /**< bit 2 */
+		uint8_t reserved : 5;           /**< bits 7-3: must be 0 */
+	} bits;
+#endif
+};
 
-int MQTTSNSerialize_connack(unsigned char* buf, int buflen, int connack_rc);
-int MQTTSNDeserialize_connack(MQTTSNPacket_connackData* data, unsigned char* buf, int buflen);
+typedef struct MQTTSNPacket_disconnectData MQTTSNPacket_disconnectData;
+struct MQTTSNPacket_disconnectData
+{
+	MQTTSNPacket_disconnectFlags flags;
+	uint16_t packetId;              /**< optional; diagnostic use by Server */
+	uint8_t  reasonCode;            /**< optional; 0x00 assumed when absent  */
+	uint32_t sessionExpiryInterval; /**< optional; Client only               */
+	MQTTSN_string reasonString;     /**< optional; fills to end of packet    */
+};
 
-int MQTTSNSerialize_disconnect(unsigned char* buf, int buflen, int duration);
-int MQTTSNDeserialize_disconnect(int* duration, unsigned char* buf, int buflen);
+/*
+ * Client transmit / Server receive
+ */
+int32_t MQTTSNSerialize_connect(uint8_t* buf, int32_t buflen,
+        const MQTTSNPacket_connectData* options);
 
-int MQTTSNSerialize_pingreq(unsigned char* buf, int buflen, MQTTSN_string clientid);
-int MQTTSNDeserialize_pingreq(MQTTSN_string* clientID, unsigned char* buf, int len);
+/*
+ * Server receive / Client transmit (server-side deserialize)
+ */
+int32_t MQTTSNDeserialize_connect(MQTTSNPacket_connectData* data,
+        uint8_t* buf, int32_t buflen);
 
-int MQTTSNSerialize_pingresp(unsigned char* buf, int buflen);
-int MQTTSNDeserialize_pingresp(unsigned char* buf, int buflen);
+/*
+ * Server transmit / Client receive
+ */
+int32_t MQTTSNSerialize_connack(uint8_t* buf, int32_t buflen,
+        MQTTSNPacket_connackData* data);
+
+/*
+ * Client receive / Server transmit (client-side deserialize)
+ */
+int32_t MQTTSNDeserialize_connack(MQTTSNPacket_connackData* data,
+        uint8_t* buf, int32_t buflen);
+
+/*
+ * Either side transmit / receive
+ */
+int32_t MQTTSNSerialize_disconnect(uint8_t* buf, int32_t buflen,
+        uint8_t reason_code);
+
+int32_t MQTTSNDeserialize_disconnect(MQTTSNPacket_disconnectData* data,
+        uint8_t* buf, int32_t buflen);
+
+/*
+ * Client transmit / Server receive
+ */
+int32_t MQTTSNSerialize_pingreq(uint8_t* buf, int32_t buflen,
+        MQTTSN_string clientid);
+
+/*
+ * Server receive / Client transmit (server-side deserialize)
+ */
+int32_t MQTTSNDeserialize_pingreq(MQTTSN_string* clientID,
+        uint8_t* buf, int32_t buflen);
+
+/*
+ * Server transmit / Client receive
+ */
+int32_t MQTTSNSerialize_pingresp(uint8_t* buf, int32_t buflen);
+
+/*
+ * Client receive / Server transmit (client-side deserialize)
+ */
+int32_t MQTTSNDeserialize_pingresp(uint8_t* buf, int32_t buflen);
 
 #endif /* MQTTSNCONNECT_H_ */

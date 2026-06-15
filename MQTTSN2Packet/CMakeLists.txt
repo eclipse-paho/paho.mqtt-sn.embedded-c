@@ -18,8 +18,8 @@ cmake_minimum_required(VERSION 3.12)
 
 PROJECT("paho-mqttsn2packet" C)
 
+enable_testing()
+
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(samples)
 ADD_SUBDIRECTORY(test)
-
-enable_testing()
