@@ -53,3 +53,12 @@ ADD_EXECUTABLE(
 TARGET_LINK_LIBRARIES(test_unsubscribe MQTTSN2Packet)
 
 ADD_TEST(NAME test_unsubscribe COMMAND test_unsubscribe)
+
+ADD_EXECUTABLE(
+        test_protection
+        test_protection.c
+)
+
+TARGET_LINK_LIBRARIES(test_protection MQTTSN2Packet)
+
+ADD_TEST(NAME test_protection COMMAND test_protection)
