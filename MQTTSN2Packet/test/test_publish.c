@@ -1,22 +1,25 @@
-/* Enable POSIX extensions (timersub, localtime_r) */
-#if !defined(_GNU_SOURCE)
-  #define _GNU_SOURCE
-#endif
-
 /*******************************************************************************
- * Copyright (c) 2026 IBM Corp.
+* Copyright (c) 2014, 2026 IBM Corp., Ian Craggs
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  *
  * The Eclipse Public License is available at
- *    https://www.eclipse.org/legal/epl-2.0/
+ *    http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *   http://www.eclipse.org/org/documents/edl-v10.php.
  *
+ * AI Disclosure: This file was partly AI-generated. The AI-generated
+ * portions are made available under CC0-1.0 and not subject to the
+ * project's licence. The human contributor has reviewed and verified
+ * that the code is correct.
+ *
+ * SPDX-License-Identifier: EPL-2.0 and CC0-1.0
+ *
  * Contributors:
- *    Ian Craggs - initial API and implementation for MQTT-SN 2.0
+ *    Ian Craggs - initial API and implementation and/or initial documentation
+ *    Updated for MQTT-SN 2.0 (Committee Specification Draft 01, October 2025)
  *******************************************************************************/
 
 /**
@@ -38,6 +41,11 @@
  *       MQTTSNPacket.c StackTrace.c                              \
  *       -I. -o test_mqttsn_publish
  */
+
+/* Enable POSIX extensions (timersub, localtime_r) */
+#if !defined(_GNU_SOURCE)
+  #define _GNU_SOURCE
+#endif
 
 #include "MQTTSNPublish.h"
 #include "MQTTSNPacket.h"

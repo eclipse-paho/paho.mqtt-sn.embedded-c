@@ -17,6 +17,9 @@
 
 PROJECT(mqtt-sn2-packet C)
 
-ADD_LIBRARY(MQTTSN2Packet SHARED MQTTSNConnectClient.c MQTTSNConnectServer.c MQTTSNPacket.c MQTTSNSubscribeClient.c
-            MQTTSNSerializePublish.c MQTTSNDeserializePublish.c MQTTSNSubscribeServer.c)
+ADD_LIBRARY(MQTTSN2Packet SHARED MQTTSNPacket.c
+        MQTTSNConnectClient.c MQTTSNConnectServer.c
+        MQTTSNSubscribeClient.c MQTTSNSubscribeServer.c
+        MQTTSNSerializePublish.c MQTTSNDeserializePublish.c
+        MQTTSNUnsubscribeClient.c MQTTSNUnsubscribeServer.c)
 

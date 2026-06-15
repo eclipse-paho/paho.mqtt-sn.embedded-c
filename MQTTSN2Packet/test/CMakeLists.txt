@@ -35,3 +35,21 @@ ADD_EXECUTABLE(
 TARGET_LINK_LIBRARIES(test_publish MQTTSN2Packet)
 
 ADD_TEST(NAME test_publish COMMAND test_publish)
+
+ADD_EXECUTABLE(
+        test_subscribe
+        test_subscribe.c
+)
+
+TARGET_LINK_LIBRARIES(test_subscribe MQTTSN2Packet)
+
+ADD_TEST(NAME test_subscribe COMMAND test_subscribe)
+
+ADD_EXECUTABLE(
+        test_unsubscribe
+        test_unsubscribe.c
+)
+
+TARGET_LINK_LIBRARIES(test_unsubscribe MQTTSN2Packet)
+
+ADD_TEST(NAME test_unsubscribe COMMAND test_unsubscribe)
