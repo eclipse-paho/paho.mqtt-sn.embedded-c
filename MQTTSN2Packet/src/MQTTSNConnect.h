@@ -104,7 +104,7 @@ struct MQTTSNPacket_connectData
 	} auth;
 	MQTTSN_string clientID;
 };
-#define MQTTSNPacket_connectData_initializer { 0, 0, 0, 2, 60, 100, 5, 0, \
+#define MQTTSNPacket_connectData_initializer { {0}, {0}, 0, 2, 60, 100, 5, 0, \
 	{ {MQTTSN_TOPIC_TYPE_NAME, {0}}, {0, NULL} }, { {1, 0, NULL}, {0, NULL} }, {0, 0, NULL}}
 
 typedef union MQTTSNPacket_connackFlags MQTTSNPacket_connackFlags;
