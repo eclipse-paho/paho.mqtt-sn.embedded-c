@@ -40,9 +40,10 @@
  *               assignedClientID; all optional fields; buffer too short
  *   DISCONNECT - success (reason code omitted from wire); non-zero reason
  *                code; buffer too short
- *   PINGREQ   - without clientId (connected client); with clientId (sleeping
- *               client); buffer too short
- *   PINGRESP  - basic round-trip; buffer too short
+ *   PINGREQ   - typical packet identifier; minimum (1) and maximum (0xFFFF)
+ *               packet identifier; wire length is always 4 bytes; buffer too short
+ *   PINGRESP  - no AMR field (wire length 4); AMR=0, typical, and 0xFF
+ *               (wire length 5); packet identifier echoed correctly; buffer too short
  */
 
 #include "MQTTSNPacket.h"
@@ -755,34 +756,37 @@ static void test_disconnect_buffer_too_short(void)
 
 /* =========================================================================
  * PINGREQ test cases
+ *
+ * In MQTT-SN 2.0 PINGREQ carries a mandatory Packet Identifier (§3.11.2).
+ * The Client Identifier field present in v1.2 is gone.
+ * Wire format: length(1) + type(1) + packetid(2) — always 4 bytes.
  * ========================================================================= */
 
 /*
- * Serialize with MQTTSNSerialize_pingreq, deserialize with
- * MQTTSNDeserialize_pingreq, then check the client identifier.
+ * Serialize with MQTTSNSerialize_pingreq (client), deserialize with
+ * MQTTSNDeserialize_pingreq (server), then check the Packet Identifier
+ * and the wire length.
  */
-static int pingreq_roundtrip(const char* test_name,
-        MQTTSN_string clientid)
+static int pingreq_roundtrip(const char* test_name, uint16_t packetid)
 {
-    uint8_t      buf[BUF_SIZE];
-    int32_t      slen;
-    MQTTSN_string out_id;
-    int32_t       drc;
-    int           ok = 1;
+    uint8_t  buf[BUF_SIZE];
+    int32_t  slen;
+    uint16_t out_packetid = 0;
+    int32_t  drc;
+    int      ok = 1;
 
     printf("%-58s ", test_name);
 
-    memset(buf,    0, sizeof(buf));
-    memset(&out_id, 0, sizeof(out_id));
+    memset(buf, 0, sizeof(buf));
 
-    slen = MQTTSNSerialize_pingreq(buf, (int32_t)sizeof(buf), clientid);
+    slen = MQTTSNSerialize_pingreq(buf, (int32_t)sizeof(buf), packetid);
     if (slen <= 0) {
         printf("FAIL  (serialize returned %d)\n", (int)slen);
         ++tests_run; ++tests_failed;
         return 0;
     }
 
-    drc = MQTTSNDeserialize_pingreq(&out_id, buf, slen);
+    drc = MQTTSNDeserialize_pingreq(&out_packetid, buf, slen);
     ++tests_run;
     if (drc != 1) {
         printf("FAIL  (deserialize returned %d)\n", (int)drc);
@@ -796,10 +800,8 @@ static int pingreq_roundtrip(const char* test_name,
          else { ++tests_failed; ok = 0; \
                 printf("\n  FAIL  field: %s", (label)); } } while (0)
 
-    RT_CHECK("clientID.len", out_id.len == clientid.len);
-    if (clientid.len > 0)
-        RT_CHECK("clientID.data",
-                 memcmp(out_id.data, clientid.data, clientid.len) == 0);
+    RT_CHECK("packetid round-trips",  out_packetid == packetid);
+    RT_CHECK("wire length is 4",      slen == 4);
 
 #undef RT_CHECK
 
@@ -811,31 +813,27 @@ static int pingreq_roundtrip(const char* test_name,
     return ok;
 }
 
-static void test_pingreq_no_clientid(void)
+static void test_pingreq_typical(void)
 {
-    MQTTSN_string id = { false, 0, NULL };
-    pingreq_roundtrip("PINGREQ without clientId (connected client)", id);
+    pingreq_roundtrip("PINGREQ typical packetid 0x0042", 0x0042);
 }
 
-static void test_pingreq_with_clientid(void)
+static void test_pingreq_packetid_min(void)
 {
-    MQTTSN_string id = { false, 7, "sleeper" };
-    pingreq_roundtrip("PINGREQ with clientId \"sleeper\" (sleeping client)", id);
+    pingreq_roundtrip("PINGREQ packetid 1 (minimum)", 1);
 }
 
-static void test_pingreq_long_clientid(void)
+static void test_pingreq_packetid_max(void)
 {
-    MQTTSN_string id = { false, 23, "12345678901234567890ABC" };
-    pingreq_roundtrip("PINGREQ with 23-byte clientId (max recommended)", id);
+    pingreq_roundtrip("PINGREQ packetid 0xFFFF (maximum)", 0xFFFF);
 }
 
 static void test_pingreq_buffer_too_short(void)
 {
-    uint8_t buf[1];
-    MQTTSN_string id = { false, 4, "dev1" };
+    uint8_t buf[3];  /* 3 bytes: too small for length(1)+type(1)+packetid(2) */
     printf("%-58s ", "PINGREQ buffer too short");
     ++tests_run;
-    if (MQTTSNSerialize_pingreq(buf, (int32_t)sizeof(buf), id)
+    if (MQTTSNSerialize_pingreq(buf, (int32_t)sizeof(buf), 1)
         == MQTTSNPACKET_BUFFER_TOO_SHORT)
     {
         ++tests_passed;
@@ -851,38 +849,113 @@ static void test_pingreq_buffer_too_short(void)
 
 /* =========================================================================
  * PINGRESP test cases
+ *
+ * In MQTT-SN 2.0 PINGRESP carries a mandatory Packet Identifier (§3.12.2)
+ * that echoes the one from PINGREQ, and an optional Application Messages
+ * Remaining byte (§3.12.3) whose presence is inferred from packet length.
+ *
+ * Wire lengths:
+ *   Without AMR: length(1) + type(1) + packetid(2) = 4 bytes
+ *   With AMR:    length(1) + type(1) + packetid(2) + amr(1) = 5 bytes
  * ========================================================================= */
 
-static void test_pingresp_roundtrip(void)
+/*
+ * Serialize with MQTTSNSerialize_pingresp (server), deserialize with
+ * MQTTSNDeserialize_pingresp (client), then check every field and the wire
+ * length.  messages_remaining == -1 means the AMR field is omitted.
+ */
+static int pingresp_roundtrip(const char* test_name,
+        uint16_t packetid, int messages_remaining, int32_t expected_wire_len)
 {
-    uint8_t buf[BUF_SIZE];
-    int32_t slen;
-    int32_t drc;
+    uint8_t  buf[BUF_SIZE];
+    int32_t  slen;
+    uint16_t out_packetid          = 0;
+    int      out_messages_remaining = 0;
+    int32_t  drc;
+    int      ok = 1;
 
-    printf("%-58s ", "PINGRESP round-trip");
+    printf("%-58s ", test_name);
 
     memset(buf, 0, sizeof(buf));
 
-    slen = MQTTSNSerialize_pingresp(buf, (int32_t)sizeof(buf));
+    slen = MQTTSNSerialize_pingresp(buf, (int32_t)sizeof(buf),
+                                     packetid, messages_remaining);
+    if (slen <= 0) {
+        printf("FAIL  (serialize returned %d)\n", (int)slen);
+        ++tests_run; ++tests_failed;
+        return 0;
+    }
+
+    drc = MQTTSNDeserialize_pingresp(&out_packetid, &out_messages_remaining,
+                                      buf, slen);
     ++tests_run;
-    if (slen != 2) {
-        printf("FAIL  (expected wire length 2, got %d)\n", (int)slen);
+    if (drc != 1) {
+        printf("FAIL  (deserialize returned %d)\n", (int)drc);
         ++tests_failed;
-        return;
+        return 0;
     }
     ++tests_passed;
 
-    drc = MQTTSNDeserialize_pingresp(buf, slen);
-    CHECK("PINGRESP deserialize returns 1", drc == 1);
-    printf("ok\n");
+#define RT_CHECK(label, expr) \
+    do { ++tests_run; if (expr) { ++tests_passed; } \
+         else { ++tests_failed; ok = 0; \
+                printf("\n  FAIL  field: %s", (label)); } } while (0)
+
+    RT_CHECK("packetid round-trips",         out_packetid == packetid);
+    RT_CHECK("messages_remaining round-trips",
+             out_messages_remaining == messages_remaining);
+    RT_CHECK("wire length",                  slen == expected_wire_len);
+
+#undef RT_CHECK
+
+    if (ok)
+        printf("ok\n");
+    else
+        printf("\n");
+
+    return ok;
+}
+
+static void test_pingresp_no_amr(void)
+{
+    /* AMR absent: wire length = 4 bytes; deserializer returns -1 for AMR */
+    pingresp_roundtrip("PINGRESP no AMR field (wire length 4)",
+                       0x0042, -1, 4);
+}
+
+static void test_pingresp_amr_zero(void)
+{
+    /* AMR=0 means "no messages queued"; field IS present (wire length 5) */
+    pingresp_roundtrip("PINGRESP AMR=0 (no messages queued, wire length 5)",
+                       0x0042, 0, 5);
+}
+
+static void test_pingresp_amr_typical(void)
+{
+    pingresp_roundtrip("PINGRESP AMR=3 (three messages queued)",
+                       0x0042, 3, 5);
+}
+
+static void test_pingresp_amr_max(void)
+{
+    /* 0xFF means "an unspecified positive number of messages" (§3.12.3) */
+    pingresp_roundtrip("PINGRESP AMR=0xFF (unspecified positive count)",
+                       0x0042, 0xFF, 5);
+}
+
+static void test_pingresp_packetid_echoed(void)
+{
+    /* Verify that an arbitrary packetid survives the round-trip */
+    pingresp_roundtrip("PINGRESP packetid 0x1234 echoed correctly",
+                       0x1234, -1, 4);
 }
 
 static void test_pingresp_buffer_too_short(void)
 {
-    uint8_t buf[1];
+    uint8_t buf[3];  /* 3 bytes: too small for length(1)+type(1)+packetid(2) */
     printf("%-58s ", "PINGRESP buffer too short");
     ++tests_run;
-    if (MQTTSNSerialize_pingresp(buf, (int32_t)sizeof(buf))
+    if (MQTTSNSerialize_pingresp(buf, (int32_t)sizeof(buf), 1, -1)
         == MQTTSNPACKET_BUFFER_TOO_SHORT)
     {
         ++tests_passed;
@@ -955,13 +1028,17 @@ int main(void)
     test_disconnect_buffer_too_short();
 
     section("PINGREQ");
-    test_pingreq_no_clientid();
-    test_pingreq_with_clientid();
-    test_pingreq_long_clientid();
+    test_pingreq_typical();
+    test_pingreq_packetid_min();
+    test_pingreq_packetid_max();
     test_pingreq_buffer_too_short();
 
     section("PINGRESP");
-    test_pingresp_roundtrip();
+    test_pingresp_no_amr();
+    test_pingresp_amr_zero();
+    test_pingresp_amr_typical();
+    test_pingresp_amr_max();
+    test_pingresp_packetid_echoed();
     test_pingresp_buffer_too_short();
 
     printf("\n=== Results: %d run, %d passed, %d failed ===\n",

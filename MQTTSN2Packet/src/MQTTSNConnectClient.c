@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2026 IBM Corp., Ian Craggs
+ * Copyright (c) 2014, 2026 Ian Craggs, IBM Corp.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
@@ -333,35 +333,33 @@ exit:
 /**
   * Serializes a PINGREQ packet into the supplied buffer, ready for sending.
   *
-  * A sleeping Client MUST include its Client Identifier in the PINGREQ packet
-  * to identify itself to the Server [MQTT-SN-3.11.3-1].  Connected Clients
-  * send PINGREQ with a zero-length Client Identifier.
+  * Changes from MQTT-SN 1.2:
+  *   - The Client Identifier field is replaced by a mandatory Packet Identifier
+  *     (Section 3.11.2).  The Packet Identifier is used to match the
+  *     corresponding PINGRESP.
   *
   * @param buf      the buffer into which the packet will be serialized
   * @param buflen   the length in bytes of the supplied buffer
-  * @param clientid Client Identifier string; zero-length for connected Clients
+  * @param packetid Packet Identifier; ideally a random 16-bit value
   * @return serialized length, or error if <= 0
   */
 int32_t MQTTSNSerialize_pingreq(uint8_t* buf, int32_t buflen,
-		MQTTSN_string clientid)
+		uint16_t packetid)
 {
 	uint8_t  *ptr = buf;
 	int32_t  len = 0;
 	int32_t  rc = -1;
 
 	FUNC_ENTRY;
-	/* body: type(1) + clientid (optional, fills to end) */
-	if ((len = MQTTSNPacket_len((uint16_t)(1 + clientid.len))) > buflen)
+	/* body: type(1) + packetid(2) = 3 bytes */
+	if ((len = MQTTSNPacket_len(3u)) > buflen)
 	{
 		rc = MQTTSNPACKET_BUFFER_TOO_SHORT;
 		goto exit;
 	}
 	ptr += MQTTSNPacket_encode(ptr, (uint16_t)len); /* write length */
 	writeChar(&ptr, MQTTSN_PINGREQ);                /* write packet type */
-
-	/* Client Identifier fills to end; no length prefix; omit when empty */
-	if (clientid.len > 0)
-		writeMQTTSNString(&ptr, clientid, false);
+	writeInt16(&ptr, packetid);                     /* Section 3.11.2 */
 
 	rc = (int32_t)(ptr - buf);
 exit:
@@ -371,13 +369,23 @@ exit:
 
 
 /**
-  * Deserializes the supplied (wire) buffer, verifying it is a valid PINGRESP.
+  * Deserializes the supplied (wire) buffer into PINGRESP data.
   *
-  * @param buf    the raw buffer data
-  * @param buflen the length in bytes of the data in the supplied buffer
+  * Changes from MQTT-SN 1.2:
+  *   - Packet Identifier field added (Section 3.12.2); returned in *packetid.
+  *   - Application Messages Remaining field added (Section 3.12.3); optional,
+  *     inferred from packet length.  Set to the byte value when present, or
+  *     to -1 when absent.
+  *
+  * @param packetid            returned Packet Identifier
+  * @param messages_remaining  returned Application Messages Remaining value
+  *                            (0-255), or -1 if the field was absent from wire
+  * @param buf                 the raw buffer data
+  * @param buflen              the length in bytes of the data in the supplied buffer
   * @return error code.  1 is success, 0 is failure
   */
-int32_t MQTTSNDeserialize_pingresp(uint8_t* buf, int32_t buflen)
+int32_t MQTTSNDeserialize_pingresp(uint16_t* packetid, int* messages_remaining,
+		uint8_t* buf, int32_t buflen)
 {
 	uint8_t  *curdata = buf;
 	uint8_t  *enddata = NULL;
@@ -387,11 +395,19 @@ int32_t MQTTSNDeserialize_pingresp(uint8_t* buf, int32_t buflen)
 	FUNC_ENTRY;
 	curdata += MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
 	enddata = buf + mylen;
-	if (enddata - curdata < 1)
+	if (enddata - curdata < 3)   /* type(1) + packetid(2) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_PINGRESP)
 		goto exit;
+
+	*packetid = readInt16(&curdata);               /* Section 3.12.2 */
+
+	/* Application Messages Remaining: optional, inferred from length (Section 3.12.3) */
+	if (curdata < enddata)
+		*messages_remaining = (int)(uint8_t)readChar(&curdata);
+	else
+		*messages_remaining = -1;                  /* absent from wire */
 
 	rc = 1;
 exit:

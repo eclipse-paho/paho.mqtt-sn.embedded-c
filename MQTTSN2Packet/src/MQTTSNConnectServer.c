@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2026 IBM Corp., Ian Craggs
+ * Copyright (c) 2014, 2026 Ian Craggs, IBM Corp.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
@@ -340,15 +340,19 @@ exit:
 
 
 /**
-  * Deserializes the supplied (wire) buffer into PINGREQ data.
+  * Deserializes the supplied (wire) buffer into PINGREQ data (server
+  * receive side).
   *
-  * @param clientID the client identifier (zero-copy pointer into buf); may be
-  *                 zero-length if the Client sends PINGREQ without an identifier
+  * Changes from MQTT-SN 1.2:
+  *   - Client Identifier replaced by a mandatory Packet Identifier (Section
+  *     3.11.2).  The server MUST echo this value in the corresponding PINGRESP.
+  *
+  * @param packetid returned Packet Identifier from the PINGREQ
   * @param buf      the raw buffer data
   * @param buflen   the length in bytes of the data in the supplied buffer
   * @return error code.  1 is success, 0 is failure
   */
-int32_t MQTTSNDeserialize_pingreq(MQTTSN_string* clientID,
+int32_t MQTTSNDeserialize_pingreq(uint16_t* packetid,
 		uint8_t* buf, int32_t buflen)
 {
 	uint8_t  *curdata = buf;
@@ -359,15 +363,14 @@ int32_t MQTTSNDeserialize_pingreq(MQTTSN_string* clientID,
 	FUNC_ENTRY;
 	curdata += MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
 	enddata = buf + mylen;
-	if (enddata - curdata < 1)
+	(void)enddata;
+	if (mylen < 4)           /* length(1) + type(1) + packetid(2) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_PINGREQ)
 		goto exit;
 
-	/* Client Identifier fills to end of packet; zero-copy */
-	clientID->len  = (uint16_t)(enddata - curdata);
-	clientID->data = (char*)curdata;
+	*packetid = readInt16(&curdata);               /* Section 3.11.2 */
 
 	rc = 1;
 exit:
@@ -377,25 +380,46 @@ exit:
 
 
 /**
-  * Serializes a PINGRESP packet into the supplied buffer.
+  * Serializes a PINGRESP packet into the supplied buffer (server send side).
   *
-  * @param buf    the buffer into which the packet will be serialized
-  * @param buflen the length in bytes of the supplied buffer
+  * Changes from MQTT-SN 1.2:
+  *   - Packet Identifier added (Section 3.12.2); MUST echo the Packet
+  *     Identifier from the corresponding PINGREQ.
+  *   - Application Messages Remaining (AMR) optional field added (Section
+  *     3.12.3).  Pass messages_remaining >= 0 to include it; -1 to omit.
+  *   - AMR tells a sleeping Client how many Application Messages remain
+  *     queued at the Server.  0xFF means "an unspecified positive number".
+  *
+  * @param buf                the buffer into which the packet will be serialized
+  * @param buflen             the length in bytes of the supplied buffer
+  * @param packetid           Packet Identifier echoed from the PINGREQ
+  * @param messages_remaining Application Messages Remaining (0-255 to include,
+  *                           -1 to omit the field from the wire)
   * @return serialized length, or error if <= 0
   */
-int32_t MQTTSNSerialize_pingresp(uint8_t* buf, int32_t buflen)
+int32_t MQTTSNSerialize_pingresp(uint8_t* buf, int32_t buflen,
+		uint16_t packetid, int messages_remaining)
 {
 	uint8_t  *ptr = buf;
+	int32_t  len = 0;
 	int32_t  rc = 0;
 
+	/* body: type(1) + packetid(2) + [amr(1, optional)] */
+	int32_t  bodylen = 3 + (messages_remaining >= 0 ? 1 : 0);
+
 	FUNC_ENTRY;
-	if (buflen < 2)
+	if ((len = MQTTSNPacket_len((uint16_t)bodylen)) > buflen)
 	{
 		rc = MQTTSNPACKET_BUFFER_TOO_SHORT;
 		goto exit;
 	}
-	ptr += MQTTSNPacket_encode(ptr, 2); /* write length */
-	writeChar(&ptr, MQTTSN_PINGRESP);   /* write packet type */
+	ptr += MQTTSNPacket_encode(ptr, (uint16_t)len); /* write length */
+	writeChar(&ptr, MQTTSN_PINGRESP);               /* write packet type */
+	writeInt16(&ptr, packetid);                     /* Section 3.12.2 */
+
+	/* Application Messages Remaining: written only when >= 0 (Section 3.12.3) */
+	if (messages_remaining >= 0)
+		writeChar(&ptr, (char)(uint8_t)messages_remaining);
 
 	rc = (int32_t)(ptr - buf);
 exit:

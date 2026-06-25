@@ -218,22 +218,26 @@ int32_t MQTTSNDeserialize_disconnect(MQTTSNPacket_disconnectData* data,
  * Client transmit / Server receive
  */
 int32_t MQTTSNSerialize_pingreq(uint8_t* buf, int32_t buflen,
-        MQTTSN_string clientid);
+        uint16_t packetid);
 
 /*
  * Server receive / Client transmit (server-side deserialize)
  */
-int32_t MQTTSNDeserialize_pingreq(MQTTSN_string* clientID,
+int32_t MQTTSNDeserialize_pingreq(uint16_t* packetid,
         uint8_t* buf, int32_t buflen);
 
 /*
  * Server transmit / Client receive
+ * messages_remaining: Application Messages Remaining (0-255), or -1 to omit
  */
-int32_t MQTTSNSerialize_pingresp(uint8_t* buf, int32_t buflen);
+int32_t MQTTSNSerialize_pingresp(uint8_t* buf, int32_t buflen,
+        uint16_t packetid, int messages_remaining);
 
 /*
  * Client receive / Server transmit (client-side deserialize)
+ * *messages_remaining is set to -1 when the AMR field is absent from wire
  */
-int32_t MQTTSNDeserialize_pingresp(uint8_t* buf, int32_t buflen);
+int32_t MQTTSNDeserialize_pingresp(uint16_t* packetid, int* messages_remaining,
+        uint8_t* buf, int32_t buflen);
 
 #endif /* MQTTSNCONNECT_H_ */

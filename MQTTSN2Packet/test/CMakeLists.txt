@@ -16,7 +16,7 @@
 
 PROJECT(mqtt-sn2-tests)
 
-INCLUDE_DIRECTORIES(../src)
+INCLUDE_DIRECTORIES(../src ../samples)
 
 ADD_EXECUTABLE(
         test_connect
@@ -28,8 +28,8 @@ TARGET_LINK_LIBRARIES(test_connect MQTTSN2Packet)
 ADD_TEST(NAME test_connect COMMAND test_connect)
 
 ADD_EXECUTABLE(
-  test_publish
-  test_publish.c
+        test_publish
+        test_publish.c
 )
 
 TARGET_LINK_LIBRARIES(test_publish MQTTSN2Packet)
@@ -62,3 +62,12 @@ ADD_EXECUTABLE(
 TARGET_LINK_LIBRARIES(test_protection MQTTSN2Packet)
 
 ADD_TEST(NAME test_protection COMMAND test_protection)
+
+ADD_EXECUTABLE(
+        test3
+        test3.c ../samples/transport.c
+)
+
+TARGET_LINK_LIBRARIES(test3 MQTTSN2Packet)
+
+ADD_TEST(NAME test3 COMMAND test3)
