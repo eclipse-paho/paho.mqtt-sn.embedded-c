@@ -445,51 +445,68 @@ static PyObject* py_serialize_disconnect(PyObject* self, PyObject* args)
 
 
 PyDoc_STRVAR(serialize_pingreq_doc,
-"serialize_pingreq(client_id=b'') -> bytes\n"
+"serialize_pingreq(packet_id) -> bytes\n"
 "\n"
 "Serialize a MQTT-SN 2.0 PINGREQ packet.\n"
-"client_id  empty for connected clients; sleeping clients include their id.");
+"\n"
+"packet_id  int (0-65535): used to match the corresponding PINGRESP.\n"
+"           The caller should use a fresh value for each PINGREQ.\n"
+"\n"
+"Wire format: length(1) + type(1) + packet_id(2) = always 4 bytes.\n"
+"The v1.2 Client Identifier field is gone in v2.0 (Section 3.11.2).");
 
 static PyObject* py_serialize_pingreq(PyObject* self, PyObject* args)
 {
-    PyObject* cid_obj = NULL;
-    if (!PyArg_ParseTuple(args, "|O", &cid_obj)) return NULL;
+    int packet_id;
+    if (!PyArg_ParseTuple(args, "i", &packet_id)) return NULL;
 
-    PyObject* enc = NULL;
-    MQTTSN_string clientid = { false, 0, NULL };
-
-    if (cid_obj && cid_obj != Py_None)
+    if (packet_id < 0 || packet_id > 0xFFFF)
     {
-        const char* ptr; Py_ssize_t len;
-        if (get_buffer(cid_obj, &ptr, &len, &enc) < 0) return NULL;
-        clientid.data = (char*)ptr;
-        clientid.len  = (uint16_t)len;
+        PyErr_SetString(PyExc_ValueError, "packet_id must be 0-65535");
+        return NULL;
     }
 
-    uint8_t buf[MQTTSN2_MAXPACKET];
-    PyObject* result = make_bytes(
-        MQTTSNSerialize_pingreq(buf, (int32_t)sizeof(buf), clientid),
+    uint8_t buf[8];   /* fixed 4-byte packet; small stack buffer is fine */
+    return make_bytes(
+        MQTTSNSerialize_pingreq(buf, (int32_t)sizeof(buf), (uint16_t)packet_id),
         buf);
-    Py_XDECREF(enc);
-    return result;
 }
 
 
 PyDoc_STRVAR(deserialize_pingresp_doc,
-"deserialize_pingresp(buffer) -> bool\n"
+"deserialize_pingresp(buffer) -> dict\n"
 "\n"
 "Deserialize a MQTT-SN 2.0 PINGRESP packet.\n"
-"Returns True if the buffer is a valid PINGRESP, False otherwise.");
+"\n"
+"Returns a dict with keys:\n"
+"  packet_id           int  — must equal the PINGREQ packet_id\n"
+"  messages_remaining  int  — Application Messages Remaining (0-255),\n"
+"                             or -1 if the field was absent from the wire\n"
+"\n"
+"Raises mqttsn2.MQTTSNError if the buffer is not a valid PINGRESP.");
 
 static PyObject* py_deserialize_pingresp(PyObject* self, PyObject* args)
 {
     Py_buffer view;
     if (!PyArg_ParseTuple(args, "y*", &view)) return NULL;
 
+    uint16_t packetid          = 0;
+    int      messages_remaining = 0;
+
     int32_t rc = MQTTSNDeserialize_pingresp(
+                     &packetid, &messages_remaining,
                      (uint8_t*)view.buf, (int32_t)view.len);
     PyBuffer_Release(&view);
-    return PyBool_FromLong(rc == 1);
+
+    if (rc != 1)
+    {
+        PyErr_SetString(mqttsn2_error, "PINGRESP deserialization failed");
+        return NULL;
+    }
+
+    return Py_BuildValue("{s:i, s:i}",
+        "packet_id",          (int)packetid,
+        "messages_remaining", messages_remaining);
 }
 
 
