@@ -64,20 +64,20 @@ TARGET_LINK_LIBRARIES(test_protection MQTTSN2Packet)
 ADD_TEST(NAME test_protection COMMAND test_protection)
 
 ADD_EXECUTABLE(
-        test2
+        test22
         test2.c ../samples/transport.c
 )
 
-TARGET_LINK_LIBRARIES(test2 MQTTSN2Packet)
+TARGET_LINK_LIBRARIES(test22 MQTTSN2Packet)
 
-ADD_TEST(NAME test2 COMMAND test2)
+ADD_TEST(NAME test22 COMMAND test22)
 
 ADD_EXECUTABLE(
-        test3
+        test23
         test3.c ../samples/transport.c
 )
 
-TARGET_LINK_LIBRARIES(test3 MQTTSN2Packet /opt/homebrew/opt/openssl@3/lib/libcrypto.dylib)
-TARGET_INCLUDE_DIRECTORIES(test3 PUBLIC /opt/homebrew/opt/openssl@3/include)
+TARGET_LINK_LIBRARIES(test23 MQTTSN2Packet /opt/homebrew/opt/openssl@3/lib/libcrypto.dylib)
+TARGET_INCLUDE_DIRECTORIES(test23 PUBLIC /opt/homebrew/opt/openssl@3/include)
 
-ADD_TEST(NAME test3 COMMAND test3)
+ADD_TEST(NAME test23 COMMAND test23)

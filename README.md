@@ -2,17 +2,20 @@
 
 This repository contains the source code for the [Eclipse Paho](http://eclipse.org/paho) MQTT-SN C/C++ client library for Embedded platorms.
 
-It is dual licensed under the EPL and EDL (see about.html and notice.html for more details).  You can choose which of these licenses you want to use the code under.  The EDL allows you to embed the code into your application, and distribute your application in binary or source form without contributing any of your code, or any changes you make back to Paho.  See the EDL for the exact conditions.
+It is dual licensed under the EPL 2.0 and EDL (see about.html and notice.html for more details).  You can choose which of these licenses you want to use the code under.  The EDL allows you to embed the code into your application, and distribute your application in binary or source form without contributing any of your code, or any changes you make back to Paho.  See the EDL for the exact conditions.
 
-There are three sub-projects:
+There are four sub-projects:
 
-1. MQTTSNPacket - simple de/serialization of MQTT-SN packets, plus helper functions
-2. MQTTGateway - MQTT-SN transparent/aggregating gateway - connects MQTT-SN clients with an MQTT server.  See the README within the project for more information.
-3. MQTTSNClient - high(er) level C++ client (not yet complete)
+1. MQTTSNPacket - simple de/serialization of MQTT-SN 1.2 packets, plus helper functions
+2. MQTTSN2Packet - de/serialization of MQTT-SN 2.0 packets, with samples and tests
+3. MQTTGateway - MQTT-SN 1.2 transparent/aggregating gateway - connects MQTT-SN clients with an MQTT server.  See the README within the project for more information.
+4. MQTTSNClient - MQTT-SN 1.2 high(er) level C++ client (not yet complete)
 
 The *MQTTSNPacket* directory contains the lowest level C library with the smallest requirements.  This supplies simple serialization
 and deserialization routines.  They serve as a base for the higher level libraries, but can also be used on their own.
 It is mainly up to you to write and read to and from the network.
+
+See README.md in the MQTTSN2Packet directory for more information about this sub-project. 
 
 The *MQTTSNGateway* directory contains an MQTT-SN to MQTT transparent/aggregating gateway (see the MQTT-SN specification for a description of that.)  It can
 be used to connect the MQTT-SN client to an MQTT server.
@@ -22,10 +25,9 @@ MQTT project, but it's not yet complete.
 
 ## Build requirements / compilation
 
-CMake builds have been introduced, along with Travis-CI configuration for automated build & testing.
+CMake builds have been introduced, along a configuration for automated build & testing.
 
-The travis-build.sh file has the full build and test sequence for Linux.
-
+The cmake-build.sh file has the full build and test sequence for Linux and MacOS.
 
 ## Usage and API
 
