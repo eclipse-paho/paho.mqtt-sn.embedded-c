@@ -179,8 +179,7 @@ class Client
     friend class ClientList;
     friend class ClientsPool;
 public:
-    Client(bool secure = false);
-    Client(uint8_t maxInflightMessages, bool secure);
+    Client();
     ~Client();
 
     Connect* getConnectData(void);

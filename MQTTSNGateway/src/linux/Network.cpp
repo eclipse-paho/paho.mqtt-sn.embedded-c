@@ -238,11 +238,11 @@ int Network::_numOfInstance = 0;
 SSL_CTX* Network::_ctx = 0;
 SSL_SESSION* Network::_session = 0;
 
-Network::Network(bool secure) :
+Network::Network() :
 		TCPStack()
 {
 	_ssl = 0;
-	_secureFlg = secure;
+	_secureFlg = false;
 	_busy = false;
 	_sslValid = false;
 }

@@ -34,7 +34,7 @@ char* currentDateTime(void);
 static const char* theClientStatus[] = { "InPool", "Disconnected", "TryConnecting", "Connecting", "Active", "Asleep", "Awake",
         "Lost" };
 
-Client::Client(bool secure)
+Client::Client()
 {
     _packetId = 0;
     _snMsgId = 0;
@@ -45,8 +45,7 @@ Client::Client(bool secure)
     _willTopic = nullptr;
     _willMsg = nullptr;
     _connectData = MQTTPacket_Connect_Initializer;
-    _network = new Network(secure);
-    _secureNetwork = secure;
+    _network = new Network();
     _sensorNetype = true;
     _connAck = nullptr;
     _waitWillMsgFlg = false;
@@ -426,7 +425,7 @@ bool Client::isConnecting(void)
 
 bool Client::isSecureNetwork(void)
 {
-    return _secureNetwork;
+    return _network->isSecure();
 }
 
 bool Client::isSensorNetStable(void)

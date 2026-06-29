@@ -69,17 +69,17 @@ BrokerSecurePortNo=8883
 **BrokerSecurePortNo** is a broker's port no of TLS connection.    
 ```
 #
-# CertsKey for TLS connections to a broker
+# CertKey for TLS connections to a broker
 #
 
 #RootCAfile=/etc/ssl/certs/ca-certificates.crt
 #RootCApath=/etc/ssl/certs/
-#CertsKey=/path/to/certKey.pem
+#CertKey=/path/to/certKey.pem
 #PrivateKey=/path/to/privateKey.pem
 ```
 **RootCAfile** is a CA file name.    
 **RootCApath** is a CA path. **SSL_CTX_load_verify_locations(ctx, CAfile, CApath)** function requires these parameters.        
-**CertsKey** is a certificate pem file.    
+**CertKey** is a certificate pem file.
 **PrivateKey** is a private key pem file.   
 Clients can connect to the broker via TLS by setting '**Secure Connection**' for each client in the client conf file.   
 ```

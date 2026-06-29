@@ -1,10 +1,13 @@
 #!/bin/bash
 
+WORK_DIR=$(realpath $(dirname "$0")/..)
+BDIR=build.gateway
+ODIR=bin/
+
 build () {
     echo "Start building MQTT-SN Gateway  $1"
     
-    cd $SCRIPT_DIR/..
-    BDIR='build.gateway'
+    pushd "$WORK_DIR"
     if [ ! -d ./$BDIR ]; then
         mkdir $BDIR
     fi
@@ -13,11 +16,9 @@ build () {
     make MQTTSNPacket
     make MQTT-SNGateway
     make MQTT-SNLogmonitor
-    cd  ../MQTTSNGateway
-    cp *.conf ./bin/
+    popd
+    cp *.conf ./$ODIR
 }
-
-SCRIPT_DIR=$(cd $(dirname $0); pwd)
 
 if [ $1 == "udp" ] ; then
     build $1 $2 $3
@@ -34,7 +35,10 @@ elif [ $1 == "dtls" ] ; then
 elif [ $1 == "dtls6" ] ; then
     build dtls "${2} ${3} -DDTLS6"
 elif [ $1 == "clean" ] ; then
-    rm -rf ../builg.gateway
+    pushd "$WORK_DIR"
+    rm -rf ./$BDIR
+    popd
+    rm -rf ./$ODIR
 else
     echo "Usage: build.sh  [ udp | udp6 | xbee | loralink | rfcomm | dtls | dtls6 | clean]"
 fi

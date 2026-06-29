@@ -416,12 +416,24 @@ int UDPPort6::unicast(const uint8_t* buf, uint32_t length, SensorNetAddress* add
 
 int UDPPort6::broadcast(const uint8_t* buf, uint32_t length)
 {
-    int err = unicast(buf, length, &_grpAddr);
+    sockaddr_in6 dest;
+    memset(&dest, 0, sizeof(dest));
+    dest.sin6_family = AF_INET6;
+    dest.sin6_port = _grpAddr.getPortNo();
+    memcpy(dest.sin6_addr.s6_addr, (const void*) &_grpAddr.getIpAddress()->sin6_addr, sizeof(in6_addr));
 
-    if (err < 0)
+#ifdef  DEBUG_NW
+    char addrBuf[INET6_ADDRSTRLEN];
+    addr->sprint(addrBuf);
+    D_NWSTACK("sendto %s\n", addrBuf);
+#endif
+
+    int status = ::sendto(_pollfds[1].fd, buf, length, 0, (const sockaddr*) &dest, sizeof(dest));
+
+    if (status < 0)
     {
         D_NWSTACK("UDP6::broadcast - sendto: %s", strerror(errno));
-        return err;
+        return status;
     }
 
     return 0;

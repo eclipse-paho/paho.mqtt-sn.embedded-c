@@ -68,7 +68,7 @@ private:
 class Network: public TCPStack
 {
 public:
-	Network(bool secure);
+	Network();
 	virtual ~Network();
 
 	bool connect(const char* host, const char* port, const char* caPath, const char* caFile, const char* cert, const char* prvkey);
