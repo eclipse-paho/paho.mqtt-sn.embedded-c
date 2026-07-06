@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corp.
+ * Copyright (c) 2014, 2026 IBM Corp., Ian Craggs
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -36,9 +36,13 @@ int MQTTSNDeserialize_connect(MQTTSNPacket_connectData* data, unsigned char* buf
 	int rc = 0;
 	int version;
 	int mylen = 0;
+	int lenlen;
 
 	FUNC_ENTRY;
-	curdata += MQTTSNPacket_decode(curdata, len, &mylen); /* read length */
+	lenlen = MQTTSNPacket_decode(curdata, len, &mylen); /* read length */
+	if (lenlen < 0)
+		goto exit;
+	curdata += lenlen;
 	enddata = buf + mylen;
 	if (enddata - curdata < 2)
 		goto exit;
@@ -108,9 +112,13 @@ int MQTTSNDeserialize_disconnect(int* duration, unsigned char* buf, int buflen)
 	unsigned char* enddata = NULL;
 	int rc = -1;
 	int mylen;
+	int lenlen;
 
 	FUNC_ENTRY;
-	curdata += MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	if (lenlen < 0)
+		goto exit;
+	curdata += lenlen;
 	enddata = buf + mylen;
 	if (enddata - curdata < 1)
 		goto exit;
@@ -200,9 +208,13 @@ int MQTTSNDeserialize_pingreq(MQTTSNString* clientID, unsigned char* buf, int le
 	unsigned char* enddata = &buf[len];
 	int rc = 0;
 	int mylen = 0;
+	int lenlen;
 
 	FUNC_ENTRY;
-	curdata += MQTTSNPacket_decode(curdata, len, &mylen); /* read length */
+	lenlen = MQTTSNPacket_decode(curdata, len, &mylen); /* read length */
+	if (lenlen < 0)
+		goto exit;
+	curdata += lenlen;
 	enddata = buf + mylen;
 	if (enddata - curdata < 1)
 		goto exit;
@@ -263,9 +275,13 @@ int MQTTSNDeserialize_willtopic1(int *willQoS, unsigned char *willRetain, MQTTSN
 	unsigned char* enddata = &buf[len];
 	int rc = 0;
 	int mylen = 0;
+	int lenlen;
 
 	FUNC_ENTRY;
-	curdata += MQTTSNPacket_decode(curdata, len, &mylen); /* read length */
+	lenlen = MQTTSNPacket_decode(curdata, len, &mylen); /* read length */
+	if (lenlen < 0)
+		goto exit;
+	curdata += lenlen;
 	enddata = buf + mylen;
 	if (enddata > buf + len)
 		goto exit;
@@ -325,9 +341,13 @@ int MQTTSNDeserialize_willmsg1(MQTTSNString* willMsg, unsigned char* buf, int le
 	unsigned char* enddata = &buf[len];
 	int rc = 0;
 	int mylen = 0;
+	int lenlen;
 
 	FUNC_ENTRY;
-	curdata += MQTTSNPacket_decode(curdata, len, &mylen); /* read length */
+	lenlen = MQTTSNPacket_decode(curdata, len, &mylen); /* read length */
+	if (lenlen < 0)
+		goto exit;
+	curdata += lenlen;
 	enddata = buf + mylen;
 	if (enddata > buf + len)
 		goto exit;

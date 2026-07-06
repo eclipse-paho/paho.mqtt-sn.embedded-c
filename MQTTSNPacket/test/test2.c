@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corp.
+ * Copyright (c) 2014, 2026 IBM Corp., Ian Craggs
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -677,7 +677,7 @@ int test6(struct Options options)
 int main(int argc, char** argv)
 {
 	int rc = 0;
- 	int (*tests[])() = {NULL, test1, test2};
+ 	int (*tests[])(struct Options) = {NULL, test1, test2};
 
 	xml = fopen("TEST-test1.xml", "w");
 	fprintf(xml, "<testsuite name=\"test2\" tests=\"%d\">\n", (int)(ARRAY_SIZE(tests) - 1));

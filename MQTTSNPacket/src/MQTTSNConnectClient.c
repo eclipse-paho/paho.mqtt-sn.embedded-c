@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2015 IBM Corp.
+ * Copyright (c) 2014, 2026 IBM Corp., Ian Craggs
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -88,9 +88,13 @@ int MQTTSNDeserialize_connack(int* connack_rc, unsigned char* buf, int buflen)
 	unsigned char* enddata = NULL;
 	int rc = 0;
 	int mylen;
+	int lenlen;
 
 	FUNC_ENTRY;
-	curdata += (rc = MQTTSNPacket_decode(curdata, buflen, &mylen)); /* read length */
+	lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	if (lenlen < 0)
+		goto exit;
+	curdata += lenlen;
 	enddata = buf + mylen;
 	if (enddata - buf < 3)
 		goto exit;
@@ -198,9 +202,13 @@ int MQTTSNDeserialize_pingresp(unsigned char* buf, int buflen)
 	unsigned char* enddata = NULL;
 	int rc = 0;
 	int mylen;
+	int lenlen;
 
 	FUNC_ENTRY;
-	curdata += MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	if (lenlen < 0)
+		goto exit;
+	curdata += lenlen;
 	enddata = buf + mylen;
 	if (enddata - curdata < 1)
 		goto exit;
@@ -426,9 +434,13 @@ int MQTTSNDeserialize_willtopicresp(int* resp_rc, unsigned char* buf, int buflen
 	unsigned char* enddata = NULL;
 	int rc = 0;
 	int mylen;
+	int lenlen;
 
 	FUNC_ENTRY;
-	curdata += MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	if (lenlen < 0)
+		goto exit;
+	curdata += lenlen;
 	enddata = buf + mylen;
 	if (enddata - buf < 3)
 		goto exit;
@@ -458,9 +470,13 @@ int MQTTSNDeserialize_willmsgresp(int* resp_rc, unsigned char* buf, int buflen)
 	unsigned char* enddata = NULL;
 	int rc = 0;
 	int mylen;
+	int lenlen;
 
 	FUNC_ENTRY;
-	curdata += MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	if (lenlen < 0)
+		goto exit;
+	curdata += lenlen;
 	enddata = buf + mylen;
 	if (enddata - buf < 3)
 		goto exit;

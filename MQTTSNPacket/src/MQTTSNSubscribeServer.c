@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corp.
+ * Copyright (c) 2014, 2026 IBM Corp., Ian Craggs
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -37,9 +37,13 @@ int MQTTSNDeserialize_subscribe(unsigned char* dup, int* qos, unsigned short* pa
 	unsigned char* enddata = NULL;
 	int rc = 0;
 	int mylen = 0;
+	int lenlen;
 
 	FUNC_ENTRY;
-	curdata += MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	if (lenlen < 0)
+		goto exit;
+	curdata += lenlen;
 	enddata = buf + mylen;
 	if (enddata - curdata > buflen)
 		goto exit;

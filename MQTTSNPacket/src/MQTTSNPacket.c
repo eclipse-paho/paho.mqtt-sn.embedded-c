@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corp.
+ * Copyright (c) 2014, 2026 IBM Corp., Ian Craggs
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -267,7 +267,7 @@ int MQTTSNPacket_read(unsigned char* buf, int buflen, int (*getfn)(unsigned char
 
 	/* 2. read the length.  This is variable in itself */
 	lenlen = MQTTSNPacket_decode(buf, len, &datalen);
-	if (datalen != len)
+	if (lenlen < 0 || datalen != len)
 		goto exit; /* there was an error */
 
 	rc = buf[lenlen]; /* return the packet type */
@@ -284,7 +284,7 @@ int MQTTSNPacket_read_nb(unsigned char* buf, int buflen)
 
 	/* 2. read the length.  This is variable in itself */
 	lenlen = MQTTSNPacket_decode(buf, len, &datalen);
-	if (datalen != len)
+	if (lenlen < 0 || datalen != len)
 		goto exit; /* there was an error */
 
 	rc = buf[lenlen]; /* return the packet type */
