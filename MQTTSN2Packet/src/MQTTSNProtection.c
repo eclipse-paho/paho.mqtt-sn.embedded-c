@@ -237,7 +237,10 @@ int32_t MQTTSNDeserialize_protection(MQTTSNPacket_protectionData* data,
 	uint16_t inner_pkt_len;
 
 	FUNC_ENTRY;
-	curdata += MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	if (lenlen < 0)
+		goto exit;
+	curdata += lenlen;
 	enddata = buf + mylen;
 	if (enddata - curdata > buflen)
 		goto exit;

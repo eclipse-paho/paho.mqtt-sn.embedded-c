@@ -95,7 +95,10 @@ int32_t MQTTSNDeserialize_publish(uint8_t* dup, int32_t* qos, uint8_t* retained,
 	int32_t  mylen = 0;
 
 	FUNC_ENTRY;
-	curdata += MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	if (lenlen < 0)
+		goto exit;
+	curdata += lenlen;
 	enddata = buf + mylen;
 	if (enddata - curdata > buflen)
 		goto exit;
@@ -168,7 +171,10 @@ int32_t MQTTSNDeserialize_puback(uint16_t* packetid, uint8_t* returncode,
 	int32_t  mylen = 0;
 
 	FUNC_ENTRY;
-	curdata += MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	if (lenlen < 0)
+		goto exit;
+	curdata += lenlen;
 	enddata = buf + mylen;
 	if (enddata - curdata > buflen)
 		goto exit;
@@ -216,7 +222,10 @@ int32_t MQTTSNDeserialize_ack(uint8_t* packettype, uint16_t* packetid,
 	int32_t  mylen = 0;
 
 	FUNC_ENTRY;
-	curdata += MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	if (lenlen < 0)
+		goto exit;
+	curdata += lenlen;
 	enddata = buf + mylen;
 	if (enddata - curdata > buflen)
 		goto exit;
@@ -271,7 +280,10 @@ int32_t MQTTSNDeserialize_register(uint8_t* topic_alias_present, uint16_t* topic
 	int32_t  mylen = 0;
 
 	FUNC_ENTRY;
-	curdata += MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	if (lenlen < 0)
+		goto exit;
+	curdata += lenlen;
 	enddata = buf + mylen;
 	if (enddata - curdata > buflen)
 		goto exit;
@@ -334,7 +346,10 @@ int32_t MQTTSNDeserialize_regack(uint8_t* topic_type, uint8_t* topic_alias_prese
 	int32_t  mylen = 0;
 
 	FUNC_ENTRY;
-	curdata += MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	if (lenlen < 0)
+		goto exit;
+	curdata += lenlen;
 	enddata = buf + mylen;
 	if (enddata - curdata > buflen)
 		goto exit;

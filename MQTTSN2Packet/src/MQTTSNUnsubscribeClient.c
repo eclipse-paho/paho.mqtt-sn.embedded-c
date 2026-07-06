@@ -161,7 +161,10 @@ int32_t MQTTSNDeserialize_unsuback(uint16_t* packetid, uint8_t* returncode,
 	int32_t  mylen = 0;
 
 	FUNC_ENTRY;
-	curdata += MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	if (lenlen < 0)
+		goto exit;
+	curdata += lenlen;
 	enddata = buf + mylen;
 	if (enddata - curdata > buflen)
 		goto exit;

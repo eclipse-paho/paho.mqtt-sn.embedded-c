@@ -227,7 +227,10 @@ int32_t MQTTSNDeserialize_connack(MQTTSNPacket_connackData* data,
 	int32_t  mylen = 0;
 
 	FUNC_ENTRY;
-	curdata += MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	if (lenlen < 0)
+		goto exit;
+	curdata += lenlen;
 	enddata = buf + mylen;
 	if (enddata - buf < 3)
 		goto exit;
@@ -393,7 +396,10 @@ int32_t MQTTSNDeserialize_pingresp(uint16_t* packetid, int* messages_remaining,
 	int32_t  mylen = 0;
 
 	FUNC_ENTRY;
-	curdata += MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	if (lenlen < 0)
+		goto exit;
+	curdata += lenlen;
 	enddata = buf + mylen;
 	if (enddata - curdata < 3)   /* type(1) + packetid(2) */
 		goto exit;

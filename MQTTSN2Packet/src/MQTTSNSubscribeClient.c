@@ -172,7 +172,10 @@ int32_t MQTTSNDeserialize_suback(uint16_t* topicid, uint8_t* topic_alias_present
 	int32_t  mylen = 0;
 
 	FUNC_ENTRY;
-	curdata += MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	if (lenlen < 0)
+		goto exit;
+	curdata += lenlen;
 	enddata = buf + mylen;
 	if (enddata - curdata > buflen)
 		goto exit;

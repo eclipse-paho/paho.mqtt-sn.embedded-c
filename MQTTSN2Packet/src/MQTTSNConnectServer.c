@@ -93,7 +93,10 @@ int32_t MQTTSNDeserialize_connect(MQTTSNPacket_connectData* data,
 	int32_t  mylen = 0;
 
 	FUNC_ENTRY;
-	curdata += MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	if (lenlen < 0)
+		goto exit;
+	curdata += lenlen;
 	enddata = buf + mylen;
 	if (enddata - curdata < 2)
 		goto exit;
@@ -291,7 +294,10 @@ int32_t MQTTSNDeserialize_disconnect(MQTTSNPacket_disconnectData* data,
 	int32_t  mylen = 0;
 
 	FUNC_ENTRY;
-	curdata += MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	if (lenlen < 0)
+		goto exit;
+	curdata += lenlen;
 	enddata = buf + mylen;
 	if (enddata - curdata < 1)
 		goto exit;
@@ -361,7 +367,10 @@ int32_t MQTTSNDeserialize_pingreq(uint16_t* packetid,
 	int32_t  mylen = 0;
 
 	FUNC_ENTRY;
-	curdata += MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	if (lenlen < 0)
+		goto exit;
+	curdata += lenlen;
 	enddata = buf + mylen;
 	(void)enddata;
 	if (mylen < 4)           /* length(1) + type(1) + packetid(2) */

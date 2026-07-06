@@ -301,7 +301,8 @@ int MQTTSNPacket_read(unsigned char* buf, int buflen,
 
 	if ((len = (*getfn)(buf, buflen)) < 2)
 		goto exit;
-	MQTTSNPacket_decode(buf, len, &mylen);
+	if (MQTTSNPacket_decode(buf, len, &mylen) < 0)
+		goto exit;
 	if (mylen != len)
 		goto exit;
 	rc = (int)(uint8_t)buf[(buf[0] == 0x01u) ? 3 : 1];
@@ -318,7 +319,8 @@ int MQTTSNPacket_read_nb(unsigned char* buf, int buflen)
 	int rc = MQTTSNPACKET_READ_ERROR;
 	int mylen = 0;
 
-	MQTTSNPacket_decode(buf, buflen, &mylen);
+	if (MQTTSNPacket_decode(buf, buflen, &mylen) < 0)
+		goto exit;
 	if (mylen != buflen)
 		goto exit;
 	rc = (int)(uint8_t)buf[(buf[0] == 0x01u) ? 3 : 1];
