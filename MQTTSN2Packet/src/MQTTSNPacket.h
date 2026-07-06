@@ -179,6 +179,14 @@ void writeMQTTSNData(unsigned char** pptr, MQTTSN_data data, bool withLength);
 int MQTTSNPacket_read(unsigned char* buf, int buflen, int (*getfn)(unsigned char*, int));
 int MQTTSNPacket_read_nb(unsigned char* buf, int buflen);
 
+/* Returns non-zero if at least n bytes remain between cur and end.
+ * Used by all deserialize functions to guard every read against overrun.
+ */
+static inline int buf_avail(const uint8_t *cur, const uint8_t *end, int32_t n)
+{
+    return n >= 0 && (int32_t)(end - cur) >= n;
+}
+
 
 #ifdef __cplusplus /* If this is a C++ compiler, use C linkage */
 }

@@ -242,7 +242,7 @@ int32_t MQTTSNDeserialize_protection(MQTTSNPacket_protectionData* data,
 		goto exit;
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (enddata - curdata > buflen)
+	if (!buf_avail(curdata, enddata, 2))              /* type(1) + flags(1) */
 		goto exit;
 
 	if ((uint8_t)readChar(&curdata) != MQTTSN_PROTECTION)
@@ -264,7 +264,10 @@ int32_t MQTTSNDeserialize_protection(MQTTSNPacket_protectionData* data,
 	crypto_bytes  = cryptoMaterialLens[crypto_len_field];
 	(void)auth_tag_len_field; /* length is inferred from packet length; see below */
 
-	/* Protection Scheme (Section 3.17.3) */
+	/* Protection Scheme (Section 3.17.3) + Sender ID (Section 3.17.4) + Random (Section 3.17.5) */
+	if (!buf_avail(curdata, enddata,
+	               1 + MQTTSN_PROTECTION_SENDER_ID_LEN + MQTTSN_PROTECTION_RANDOM_LEN))
+		goto exit;
 	data->scheme = (uint8_t)readChar(&curdata);
 
 	/* Sender Identifier — always 8 bytes (Section 3.17.4) */
@@ -276,11 +279,15 @@ int32_t MQTTSNDeserialize_protection(MQTTSNPacket_protectionData* data,
 	curdata += MQTTSN_PROTECTION_RANDOM_LEN;
 
 	/* Cryptographic Material — zero-copy (Section 3.17.6) */
+	if (!buf_avail(curdata, enddata, (int32_t)crypto_bytes))
+		goto exit;
 	data->cryptoMaterial.len  = crypto_bytes;
 	data->cryptoMaterial.data = (crypto_bytes > 0) ? curdata : NULL;
 	curdata += crypto_bytes;
 
 	/* Monotonic Counter — zero-copy (Section 3.17.7) */
+	if (!buf_avail(curdata, enddata, (int32_t)counter_bytes))
+		goto exit;
 	data->monotonicCounter.len  = counter_bytes;
 	data->monotonicCounter.data = (counter_bytes > 0) ? curdata : NULL;
 	curdata += counter_bytes;

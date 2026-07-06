@@ -83,7 +83,7 @@ int32_t MQTTSNDeserialize_unsubscribe(uint16_t* packetid,
 		goto exit;
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (enddata - curdata > buflen)
+	if (!buf_avail(curdata, enddata, 4))              /* type(1)+flags(1)+packetId(2) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_UNSUBSCRIBE)
@@ -106,7 +106,11 @@ int32_t MQTTSNDeserialize_unsubscribe(uint16_t* packetid,
 		topic->alt.string.data = (char*)curdata;
 	}
 	else /* MQTTSN_TOPIC_TYPE_SESSION or MQTTSN_TOPIC_TYPE_PREDEFINED */
+	{
+		if (!buf_avail(curdata, enddata, 2))
+			goto exit;
 		topic->alt.alias = readInt16(&curdata); /* 2-byte topic alias */
+	}
 
 	rc = 1;
 exit:

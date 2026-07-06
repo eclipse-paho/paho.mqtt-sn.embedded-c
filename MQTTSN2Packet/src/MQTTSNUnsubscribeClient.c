@@ -166,7 +166,7 @@ int32_t MQTTSNDeserialize_unsuback(uint16_t* packetid, uint8_t* returncode,
 		goto exit;
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (enddata - curdata > buflen)
+	if (!buf_avail(curdata, enddata, 3))              /* type(1) + packetId(2) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_UNSUBACK)

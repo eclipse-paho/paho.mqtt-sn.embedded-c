@@ -232,7 +232,7 @@ int32_t MQTTSNDeserialize_connack(MQTTSNPacket_connackData* data,
 		goto exit;
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (enddata - buf < 3)
+	if (!buf_avail(curdata, enddata, 5))              /* type(1)+flags(1)+packetId(2)+reasonCode(1) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_CONNACK)                /* packet type */
@@ -246,6 +246,8 @@ int32_t MQTTSNDeserialize_connack(MQTTSNPacket_connackData* data,
 
 	if (data->flags.bits.sessionExpiryInterval)
 	{
+		if (!buf_avail(curdata, enddata, 4))
+			goto exit;
 		uint32_t sei = (uint32_t)((uint8_t)readChar(&curdata)) << 24;
 		sei |= (uint32_t)((uint8_t)readChar(&curdata)) << 16;
 		sei |= (uint32_t)((uint8_t)readChar(&curdata)) << 8;
@@ -254,18 +256,30 @@ int32_t MQTTSNDeserialize_connack(MQTTSNPacket_connackData* data,
 	}
 
 	if (data->flags.bits.serverKeepAlive)
+	{
+		if (!buf_avail(curdata, enddata, 2))
+			goto exit;
 		data->serverKeepAlive = readInt16(&curdata);
+	}
 
 	if (data->flags.bits.auth)
 	{
 		/* Auth method: 1-byte length prefix then string data */
+		if (!buf_avail(curdata, enddata, 1))
+			goto exit;
 		data->auth.method.islen8 = 1;
 		data->auth.method.len    = (uint16_t)(uint8_t)readChar(&curdata);
+		if (!buf_avail(curdata, enddata, (int32_t)data->auth.method.len))
+			goto exit;
 		data->auth.method.data   = (char*)curdata;
 		curdata += data->auth.method.len;
 
 		/* Auth data: 2-byte length prefix then binary data */
+		if (!buf_avail(curdata, enddata, 2))
+			goto exit;
 		data->auth.data.len  = readInt16(&curdata);
+		if (!buf_avail(curdata, enddata, (int32_t)data->auth.data.len))
+			goto exit;
 		data->auth.data.data = curdata;
 		curdata += data->auth.data.len;
 	}

@@ -177,7 +177,7 @@ int32_t MQTTSNDeserialize_suback(uint16_t* topicid, uint8_t* topic_alias_present
 		goto exit;
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (enddata - curdata > buflen)
+	if (!buf_avail(curdata, enddata, 4))              /* type(1)+flags(1)+packetId(2) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_SUBACK)
@@ -195,7 +195,11 @@ int32_t MQTTSNDeserialize_suback(uint16_t* topicid, uint8_t* topic_alias_present
 
 	/* topic alias field is present only when the Topic Alias Flag is set */
 	if (*topic_alias_present)
+	{
+		if (!buf_avail(curdata, enddata, 2))
+			goto exit;
 		*topicid = readInt16(&curdata);
+	}
 	else
 		*topicid = 0u;
 
