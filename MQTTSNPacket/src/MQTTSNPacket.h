@@ -10,9 +10,17 @@
  * and the Eclipse Distribution License is available at
  *   http://www.eclipse.org/org/documents/edl-v10.php.
  *
+ * AI Disclosure: This file was partly AI-generated. The AI-generated
+ * portions are made available under CC0-1.0 and not subject to the
+ * project's licence. The human contributor has reviewed and verified
+ * that the code is correct.
+ *
+ * SPDX-License-Identifier: EPL-2.0 and CC0-1.0
+ *
  * Contributors:
  *    Ian Craggs - initial API and implementation and/or initial documentation
  *    TomoakiiYamaguchi - modify for C++
+ *    Ian Craggs - use Claude.ai to add guards in deserialize functions
  *******************************************************************************/
 
 #ifndef MQTTSNPACKET_H_
@@ -144,6 +152,14 @@ void writeMQTTSNString(unsigned char** pptr, MQTTSNString mqttstring);
 
 int MQTTSNPacket_read(unsigned char* buf, int buflen, int (*getfn)(unsigned char*, int));
 int MQTTSNPacket_read_nb(unsigned char* buf, int buflen);
+
+/* Returns non-zero if at least n bytes remain between cur and end.
+ * Used by all deserialize functions to guard every read against overrun.
+ */
+static inline int buf_avail(const unsigned char* cur, const unsigned char* end, int n)
+{
+	return n >= 0 && (int)(end - cur) >= n;
+}
 
 
 #ifdef __cplusplus /* If this is a C++ compiler, use C linkage */

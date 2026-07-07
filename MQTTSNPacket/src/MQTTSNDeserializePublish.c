@@ -10,8 +10,16 @@
  * and the Eclipse Distribution License is available at
  *   http://www.eclipse.org/org/documents/edl-v10.php.
  *
+ * AI Disclosure: This file was partly AI-generated. The AI-generated
+ * portions are made available under CC0-1.0 and not subject to the
+ * project's licence. The human contributor has reviewed and verified
+ * that the code is correct.
+ *
+ * SPDX-License-Identifier: EPL-2.0 and CC0-1.0
+ *
  * Contributors:
  *    Ian Craggs - initial API and implementation and/or initial documentation
+ *    Ian Craggs - use Claude.ai to add guards in deserialize functions
  *******************************************************************************/
 
 #include "StackTrace.h"
@@ -49,7 +57,7 @@ int MQTTSNDeserialize_publish(unsigned char* dup, int* qos, unsigned char* retai
 		goto exit;
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (enddata - curdata > buflen)
+	if (!buf_avail(curdata, enddata, 2))          /* type(1) + flags(1) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_PUBLISH)
@@ -61,6 +69,11 @@ int MQTTSNDeserialize_publish(unsigned char* dup, int* qos, unsigned char* retai
 	*retained = flags.bits.retain;
 
 	topic->type = (MQTTSN_topicTypes)flags.bits.topicIdType;
+
+	/* topicid/short name(2) + packetid(2) */
+	if (!buf_avail(curdata, enddata, 4))
+		goto exit;
+
 	if (topic->type == MQTTSN_TOPIC_TYPE_NORMAL && *qos == 3)
 	{
 		/* special arrangement for long topic names in QoS -1 publishes.  The length of the topic is in the topicid field */
@@ -77,6 +90,8 @@ int MQTTSNDeserialize_publish(unsigned char* dup, int* qos, unsigned char* retai
 
 	if (topic->type == MQTTSN_TOPIC_TYPE_NORMAL && *qos == 3)
 	{
+		if (!buf_avail(curdata, enddata, topic->data.long_.len))
+			goto exit;
 		topic->data.long_.name = (char*)curdata;
 		curdata += topic->data.long_.len;
 	}
@@ -105,7 +120,8 @@ int MQTTSNDeserialize_puback(unsigned short* topicid, unsigned short* packetid,
 		goto exit;
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (enddata - curdata > buflen)
+	/* type(1) + topicid(2) + packetid(2) + returncode(1) */
+	if (!buf_avail(curdata, enddata, 6))
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_PUBACK)
@@ -144,7 +160,8 @@ int MQTTSNDeserialize_ack(unsigned char* type, unsigned short* packetid, unsigne
 		goto exit;
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (enddata - curdata > buflen)
+	/* type(1) + packetid(2) */
+	if (!buf_avail(curdata, enddata, 3))
 		goto exit;
 
 	*type = readChar(&curdata);
@@ -184,7 +201,8 @@ int MQTTSNDeserialize_register(unsigned short* topicid, unsigned short* packetid
 		goto exit;
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (enddata - curdata > buflen)
+	/* type(1) + topicid(2) + packetid(2) */
+	if (!buf_avail(curdata, enddata, 5))
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_REGISTER)
@@ -228,7 +246,8 @@ int MQTTSNDeserialize_regack(unsigned short* topicid, unsigned short* packetid, 
 		goto exit;
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (enddata - curdata > buflen)
+	/* type(1) + topicid(2) + packetid(2) + return_code(1) */
+	if (!buf_avail(curdata, enddata, 6))
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_REGACK)

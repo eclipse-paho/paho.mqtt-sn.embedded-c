@@ -10,9 +10,17 @@
  * and the Eclipse Distribution License is available at
  *   http://www.eclipse.org/org/documents/edl-v10.php.
  *
+ * AI Disclosure: This file was partly AI-generated. The AI-generated
+ * portions are made available under CC0-1.0 and not subject to the
+ * project's licence. The human contributor has reviewed and verified
+ * that the code is correct.
+ *
+ * SPDX-License-Identifier: EPL-2.0 and CC0-1.0
+ *
  * Contributors:
  *    Ian Craggs - initial API and implementation and/or initial documentation
  *    Nicholas Humfrey - Reformatting to make more consistent; bug 453862
+ *    Ian Craggs - use Claude.ai to add guards in deserialize functions
  *******************************************************************************/
 
 #include "MQTTSNPacket.h"
@@ -96,7 +104,8 @@ int MQTTSNDeserialize_connack(int* connack_rc, unsigned char* buf, int buflen)
 		goto exit;
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (enddata - buf < 3)
+	/* type(1) + connack_rc(1) */
+	if (!buf_avail(curdata, enddata, 2))
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_CONNACK)
@@ -210,7 +219,7 @@ int MQTTSNDeserialize_pingresp(unsigned char* buf, int buflen)
 		goto exit;
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (enddata - curdata < 1)
+	if (!buf_avail(curdata, enddata, 1))          /* type(1) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_PINGRESP)
@@ -373,7 +382,7 @@ int MQTTSNDeserialize_willtopicreq(unsigned char* buf, int buflen)
 		goto exit;
 	}
 	enddata = buf + mylen;
-	if (enddata - curdata < 1)
+	if (!buf_avail(curdata, enddata, 1))          /* type(1) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_WILLTOPICREQ)
@@ -408,7 +417,7 @@ int MQTTSNDeserialize_willmsgreq(unsigned char* buf, int buflen)
 		goto exit;
 	}
 	enddata = buf + mylen;
-	if (enddata - curdata < 1)
+	if (!buf_avail(curdata, enddata, 1))          /* type(1) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_WILLMSGREQ)
@@ -442,7 +451,8 @@ int MQTTSNDeserialize_willtopicresp(int* resp_rc, unsigned char* buf, int buflen
 		goto exit;
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (enddata - buf < 3)
+	/* type(1) + resp_rc(1) */
+	if (!buf_avail(curdata, enddata, 2))
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_WILLTOPICRESP)
@@ -478,7 +488,8 @@ int MQTTSNDeserialize_willmsgresp(int* resp_rc, unsigned char* buf, int buflen)
 		goto exit;
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (enddata - buf < 3)
+	/* type(1) + resp_rc(1) */
+	if (!buf_avail(curdata, enddata, 2))
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_WILLMSGRESP)

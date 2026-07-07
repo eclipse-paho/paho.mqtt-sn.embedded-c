@@ -10,8 +10,16 @@
  * and the Eclipse Distribution License is available at
  *   http://www.eclipse.org/org/documents/edl-v10.php.
  *
+ * AI Disclosure: This file was partly AI-generated. The AI-generated
+ * portions are made available under CC0-1.0 and not subject to the
+ * project's licence. The human contributor has reviewed and verified
+ * that the code is correct.
+ *
+ * SPDX-License-Identifier: EPL-2.0 and CC0-1.0
+ *
  * Contributors:
  *    Ian Craggs - initial API and implementation and/or initial documentation
+ *    Ian Craggs - use Claude.ai to add guards in deserialize functions
  *******************************************************************************/
 
 #include "StackTrace.h"
@@ -45,7 +53,8 @@ int MQTTSNDeserialize_subscribe(unsigned char* dup, int* qos, unsigned short* pa
 		goto exit;
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (enddata - curdata > buflen)
+	/* type(1) + flags(1) + packetid(2) */
+	if (!buf_avail(curdata, enddata, 4))
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_SUBSCRIBE)
@@ -65,9 +74,15 @@ int MQTTSNDeserialize_subscribe(unsigned char* dup, int* qos, unsigned short* pa
 		topicFilter->data.long_.name = (char*)curdata;
 	}
 	else if (topicFilter->type == MQTTSN_TOPIC_TYPE_PREDEFINED)
+	{
+		if (!buf_avail(curdata, enddata, 2))
+			goto exit;
 		topicFilter->data.id = readInt(&curdata);
+	}
 	else if (topicFilter->type == MQTTSN_TOPIC_TYPE_SHORT)
 	{
+		if (!buf_avail(curdata, enddata, 2))
+			goto exit;
 		topicFilter->data.short_name[0] = readChar(&curdata);
 		topicFilter->data.short_name[1] = readChar(&curdata);
 	}

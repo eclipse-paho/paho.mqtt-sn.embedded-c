@@ -10,8 +10,16 @@
  * and the Eclipse Distribution License is available at
  *   http://www.eclipse.org/org/documents/edl-v10.php.
  *
+ * AI Disclosure: This file was partly AI-generated. The AI-generated
+ * portions are made available under CC0-1.0 and not subject to the
+ * project's licence. The human contributor has reviewed and verified
+ * that the code is correct.
+ *
+ * SPDX-License-Identifier: EPL-2.0 and CC0-1.0
+ *
  * Contributors:
  *    Ian Craggs - initial API and implementation and/or initial documentation
+ *    Ian Craggs - use Claude.ai to add guards in deserialize functions
  *******************************************************************************/
 
 #include "StackTrace.h"
@@ -44,7 +52,7 @@ int MQTTSNDeserialize_connect(MQTTSNPacket_connectData* data, unsigned char* buf
 		goto exit;
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (enddata - curdata < 2)
+	if (!buf_avail(curdata, enddata, 2))          /* type(1) + flags(1) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_CONNECT)
@@ -53,6 +61,9 @@ int MQTTSNDeserialize_connect(MQTTSNPacket_connectData* data, unsigned char* buf
 	flags.all = readChar(&curdata);
 	data->cleansession = flags.bits.cleanSession;
 	data->willFlag = flags.bits.will;
+
+	if (!buf_avail(curdata, enddata, 3))          /* protocolID(1) + duration(2) */
+		goto exit;
 
 	if ((version = (int)readChar(&curdata)) != MQTTSN_PROTOCOL_VERSION)
 		goto exit;
@@ -120,7 +131,7 @@ int MQTTSNDeserialize_disconnect(int* duration, unsigned char* buf, int buflen)
 		goto exit;
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (enddata - curdata < 1)
+	if (!buf_avail(curdata, enddata, 1))          /* type(1) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_DISCONNECT)
@@ -216,7 +227,7 @@ int MQTTSNDeserialize_pingreq(MQTTSNString* clientID, unsigned char* buf, int le
 		goto exit;
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (enddata - curdata < 1)
+	if (!buf_avail(curdata, enddata, 1))          /* type(1) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_PINGREQ)
@@ -285,6 +296,8 @@ int MQTTSNDeserialize_willtopic1(int *willQoS, unsigned char *willRetain, MQTTSN
 	enddata = buf + mylen;
 	if (enddata > buf + len)
 		goto exit;
+	if (!buf_avail(curdata, enddata, 2))          /* type(1) + flags(1) */
+		goto exit;
 
 	if (readChar(&curdata) != packet_type)
 		goto exit;
@@ -350,6 +363,8 @@ int MQTTSNDeserialize_willmsg1(MQTTSNString* willMsg, unsigned char* buf, int le
 	curdata += lenlen;
 	enddata = buf + mylen;
 	if (enddata > buf + len)
+		goto exit;
+	if (!buf_avail(curdata, enddata, 1))          /* type(1) */
 		goto exit;
 
 	if (readChar(&curdata) != packet_type)

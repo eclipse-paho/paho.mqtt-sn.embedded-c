@@ -10,8 +10,16 @@
  * and the Eclipse Distribution License is available at
  *   http://www.eclipse.org/org/documents/edl-v10.php.
  *
+ * AI Disclosure: This file was partly AI-generated. The AI-generated
+ * portions are made available under CC0-1.0 and not subject to the
+ * project's licence. The human contributor has reviewed and verified
+ * that the code is correct.
+ *
+ * SPDX-License-Identifier: EPL-2.0 and CC0-1.0
+ *
  * Contributors:
  *    Ian Craggs - initial API and implementation and/or initial documentation
+ *    Ian Craggs - use Claude.ai to add guards in deserialize functions
  *******************************************************************************/
 
 #include "MQTTSNPacket.h"
@@ -42,7 +50,7 @@ int MQTTSNDeserialize_advertise(unsigned char* gatewayid, unsigned short* durati
 		goto exit;
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (enddata - curdata > buflen)
+	if (!buf_avail(curdata, enddata, 4))          /* type(1) + gatewayid(1) + duration(2) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_ADVERTISE)
@@ -115,7 +123,7 @@ int MQTTSNDeserialize_gwinfo(unsigned char* gatewayid, unsigned short* gatewayad
 		goto exit;
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (enddata - curdata > buflen)
+	if (!buf_avail(curdata, enddata, 2))          /* type(1) + gatewayid(1) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_GWINFO)

@@ -10,8 +10,16 @@
  * and the Eclipse Distribution License is available at
  *   http://www.eclipse.org/org/documents/edl-v10.php.
  *
+ * AI Disclosure: This file was partly AI-generated. The AI-generated
+ * portions are made available under CC0-1.0 and not subject to the
+ * project's licence. The human contributor has reviewed and verified
+ * that the code is correct.
+ *
+ * SPDX-License-Identifier: EPL-2.0 and CC0-1.0
+ *
  * Contributors:
  *    Ian Craggs - initial API and implementation and/or initial documentation
+ *    Ian Craggs - use Claude.ai to add guards in deserialize functions
  *******************************************************************************/
 
 #include "MQTTSNPacket.h"
@@ -103,7 +111,8 @@ int MQTTSNDeserialize_unsuback(unsigned short* packetid, unsigned char* buf, int
 		goto exit;
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (enddata - curdata > buflen)
+	/* type(1) + packetid(2) */
+	if (!buf_avail(curdata, enddata, 3))
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_UNSUBACK)
