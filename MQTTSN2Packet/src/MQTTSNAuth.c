@@ -141,9 +141,15 @@ int32_t MQTTSNDeserialize_auth(uint16_t* packetid, uint8_t* reasonCode,
 	FUNC_ENTRY;
 	lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
 	if (lenlen < 0)
+	{
+		rc = MQTTSNPACKET_READ_ERROR;
 		goto exit;
-	if (buflen < mylen)          /* packet longer than the supplied buffer */
+	}
+	if (buflen < mylen)              /* packet longer than the supplied buffer */
+	{
+		rc = MQTTSNPACKET_BUFFER_TOO_SHORT;
 		goto exit;
+	}
 	curdata += lenlen;
 	enddata = buf + mylen;
 	/* type(1) + packetid(2) + reasonCode(1) + methodLen(1) */

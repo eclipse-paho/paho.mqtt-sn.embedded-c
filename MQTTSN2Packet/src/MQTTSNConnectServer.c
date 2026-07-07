@@ -89,34 +89,44 @@ int32_t MQTTSNDeserialize_connect(MQTTSNPacket_connectData* data,
 {
 	uint8_t  *curdata = buf;
 	uint8_t  *enddata = NULL;
+	uint8_t  *endbuffer = buf + buflen;
 	int32_t  rc = 0;
 	int32_t  mylen = 0;
+	int32_t  lenlen;
 
 	FUNC_ENTRY;
-	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
 	if (lenlen < 0)
+	{
+		rc = MQTTSNPACKET_READ_ERROR;
 		goto exit;
+	}
+	if (buflen < mylen)              /* packet longer than the supplied buffer */
+	{
+		rc = MQTTSNPACKET_BUFFER_TOO_SHORT;
+		goto exit;
+	}
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (!buf_avail(curdata, enddata, 2))          /* type(1) + flags(1) */
+
+	if (!buf_avail(curdata, endbuffer, 2))          /* type(1) + flags(1) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_CONNECT)
 		goto exit;
-
 	/* Connect Flags (Section 3.1.2) */
 	data->flags.all = (uint8_t)readChar(&curdata);
 
 	/* Will Flags: present only when the Will bit is set (Section 3.1.3) */
 	if (data->flags.bits.will)
 	{
-		if (!buf_avail(curdata, enddata, 1))
+		if (!buf_avail(curdata, endbuffer, 1))
 			goto exit;
 		data->willFlags.all = (uint8_t)readChar(&curdata);
 	}
 
 	/* packetId(2) + version(1) + keepAlive(2) + maxPacketSize(2) = 7 mandatory bytes */
-	if (!buf_avail(curdata, enddata, 7))
+	if (!buf_avail(curdata, endbuffer, 7))
 		goto exit;
 	data->packetId = readInt16(&curdata);          /* Section 3.1.4 */
 
@@ -130,7 +140,7 @@ int32_t MQTTSNDeserialize_connect(MQTTSNPacket_connectData* data,
 	/* Default Awake Messages: optional, present when flag is set (Section 3.1.8) */
 	if (data->flags.bits.defaultAwakeMessages)
 	{
-		if (!buf_avail(curdata, enddata, 1))
+		if (!buf_avail(curdata, endbuffer, 1))
 			goto exit;
 		data->defaultAwakeMessages = (uint8_t)readChar(&curdata);
 	}
@@ -138,7 +148,7 @@ int32_t MQTTSNDeserialize_connect(MQTTSNPacket_connectData* data,
 	/* Session Expiry Interval: optional, present when flag is set (Section 3.1.9) */
 	if (data->flags.bits.sessionExpiryInterval)
 	{
-		if (!buf_avail(curdata, enddata, 4))
+		if (!buf_avail(curdata, endbuffer, 4))
 			goto exit;
 		uint32_t sei = (uint32_t)((uint8_t)readChar(&curdata)) << 24;
 		sei |= (uint32_t)((uint8_t)readChar(&curdata)) << 16;
@@ -156,26 +166,26 @@ int32_t MQTTSNDeserialize_connect(MQTTSNPacket_connectData* data,
 		if (data->will.topic.type == MQTTSN_TOPIC_TYPE_SESSION ||
 		    data->will.topic.type == MQTTSN_TOPIC_TYPE_PREDEFINED)
 		{
-			if (!buf_avail(curdata, enddata, 2))
+			if (!buf_avail(curdata, endbuffer, 2))
 				goto exit;
 			data->will.topic.alt.alias = readInt16(&curdata);
 		}
 		else /* MQTTSN_TOPIC_TYPE_NAME: length-prefixed topic name */
 		{
-			if (!buf_avail(curdata, enddata, 2))
+			if (!buf_avail(curdata, endbuffer, 2))
 				goto exit;
 			data->will.topic.alt.string.len  = readInt16(&curdata);
-			if (!buf_avail(curdata, enddata, (int32_t)data->will.topic.alt.string.len))
+			if (!buf_avail(curdata, endbuffer, (int32_t)data->will.topic.alt.string.len))
 				goto exit;
 			data->will.topic.alt.string.data = (char*)curdata;
 			curdata += data->will.topic.alt.string.len;
 		}
 
 		/* Will Payload: 2-byte length then binary data (Section 3.1.12-3.1.13) */
-		if (!buf_avail(curdata, enddata, 2))
+		if (!buf_avail(curdata, endbuffer, 2))
 			goto exit;
 		data->will.payload.len  = readInt16(&curdata);
-		if (!buf_avail(curdata, enddata, (int32_t)data->will.payload.len))
+		if (!buf_avail(curdata, endbuffer, (int32_t)data->will.payload.len))
 			goto exit;
 		data->will.payload.data = curdata;
 		curdata += data->will.payload.len;
@@ -186,19 +196,19 @@ int32_t MQTTSNDeserialize_connect(MQTTSNPacket_connectData* data,
 	 */
 	if (data->flags.bits.auth)
 	{
-		if (!buf_avail(curdata, enddata, 1))
+		if (!buf_avail(curdata, endbuffer, 1))
 			goto exit;
 		data->auth.method.islen8 = 1;
 		data->auth.method.len    = (uint16_t)(uint8_t)readChar(&curdata);
-		if (!buf_avail(curdata, enddata, (int32_t)data->auth.method.len))
+		if (!buf_avail(curdata, endbuffer, (int32_t)data->auth.method.len))
 			goto exit;
 		data->auth.method.data   = (char*)curdata;
 		curdata += data->auth.method.len;
 
-		if (!buf_avail(curdata, enddata, 2))
+		if (!buf_avail(curdata, endbuffer, 2))
 			goto exit;
 		data->auth.data.len  = readInt16(&curdata);
-		if (!buf_avail(curdata, enddata, (int32_t)data->auth.data.len))
+		if (!buf_avail(curdata, endbuffer, (int32_t)data->auth.data.len))
 			goto exit;
 		data->auth.data.data = curdata;
 		curdata += data->auth.data.len;
@@ -320,16 +330,26 @@ int32_t MQTTSNDeserialize_disconnect(MQTTSNPacket_disconnectData* data,
 {
 	uint8_t  *curdata = buf;
 	uint8_t  *enddata = NULL;
+	uint8_t  *endbuffer = buf + buflen;
 	int32_t  rc = 0;
 	int32_t  mylen = 0;
+	int32_t  lenlen;
 
 	FUNC_ENTRY;
-	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
 	if (lenlen < 0)
+	{
+		rc = MQTTSNPACKET_READ_ERROR;
 		goto exit;
+	}
+	if (buflen < mylen)              /* packet longer than the supplied buffer */
+	{
+		rc = MQTTSNPACKET_BUFFER_TOO_SHORT;
+		goto exit;
+	}
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (!buf_avail(curdata, enddata, 2))              /* type(1) + flags(1) */
+	if (!buf_avail(curdata, endbuffer, 2))              /* type(1) + flags(1) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_DISCONNECT)
@@ -341,7 +361,7 @@ int32_t MQTTSNDeserialize_disconnect(MQTTSNPacket_disconnectData* data,
 	/* Packet Identifier: present when flag bit 0 is set (Section 3.13.3) */
 	if (data->flags.bits.packetId)
 	{
-		if (!buf_avail(curdata, enddata, 2))
+		if (!buf_avail(curdata, endbuffer, 2))
 			goto exit;
 		data->packetId = readInt16(&curdata);
 	}
@@ -353,7 +373,7 @@ int32_t MQTTSNDeserialize_disconnect(MQTTSNPacket_disconnectData* data,
 	 */
 	if (data->flags.bits.reasonCode)
 	{
-		if (!buf_avail(curdata, enddata, 1))
+		if (!buf_avail(curdata, endbuffer, 1))
 			goto exit;
 		data->reasonCode = (uint8_t)readChar(&curdata);
 	}
@@ -363,7 +383,7 @@ int32_t MQTTSNDeserialize_disconnect(MQTTSNPacket_disconnectData* data,
 	/* Session Expiry Interval: present when flag bit 1 is set (Section 3.13.5) */
 	if (data->flags.bits.sessionExpiryInterval)
 	{
-		if (!buf_avail(curdata, enddata, 4))
+		if (!buf_avail(curdata, endbuffer, 4))
 			goto exit;
 		uint32_t sei = (uint32_t)((uint8_t)readChar(&curdata)) << 24;
 		sei |= (uint32_t)((uint8_t)readChar(&curdata)) << 16;
@@ -402,17 +422,25 @@ int32_t MQTTSNDeserialize_pingreq(uint16_t* packetid,
 		uint8_t* buf, int32_t buflen)
 {
 	uint8_t  *curdata = buf;
-	uint8_t  *enddata = NULL;
+	uint8_t  *endbuffer = buf + buflen;
 	int32_t  rc = 0;
 	int32_t  mylen = 0;
+	int32_t  lenlen;
 
 	FUNC_ENTRY;
-	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
 	if (lenlen < 0)
+	{
+		rc = MQTTSNPACKET_READ_ERROR;
 		goto exit;
+	}
+	if (buflen < mylen)              /* packet longer than the supplied buffer */
+	{
+		rc = MQTTSNPACKET_BUFFER_TOO_SHORT;
+		goto exit;
+	}
 	curdata += lenlen;
-	enddata = buf + mylen;
-	if (!buf_avail(curdata, enddata, 3))           /* type(1) + packetid(2) */
+	if (!buf_avail(curdata, endbuffer, 3))           /* type(1) + packetid(2) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_PINGREQ)

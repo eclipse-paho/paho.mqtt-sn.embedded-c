@@ -223,16 +223,26 @@ int32_t MQTTSNDeserialize_connack(MQTTSNPacket_connackData* data,
 {
 	uint8_t  *curdata = buf;
 	uint8_t  *enddata = NULL;
+	uint8_t  *endbuffer = buf + buflen;
 	int32_t  rc = 0;
 	int32_t  mylen = 0;
+	int32_t  lenlen;
 
 	FUNC_ENTRY;
-	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
 	if (lenlen < 0)
+	{
+		rc = MQTTSNPACKET_READ_ERROR;
 		goto exit;
+	}
+	if (buflen < mylen)              /* packet longer than the supplied buffer */
+	{
+		rc = MQTTSNPACKET_BUFFER_TOO_SHORT;
+		goto exit;
+	}
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (!buf_avail(curdata, enddata, 5))              /* type(1)+flags(1)+packetId(2)+reasonCode(1) */
+	if (!buf_avail(curdata, endbuffer, 5))              /* type(1)+flags(1)+packetId(2)+reasonCode(1) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_CONNACK)                /* packet type */
@@ -246,7 +256,7 @@ int32_t MQTTSNDeserialize_connack(MQTTSNPacket_connackData* data,
 
 	if (data->flags.bits.sessionExpiryInterval)
 	{
-		if (!buf_avail(curdata, enddata, 4))
+		if (!buf_avail(curdata, endbuffer, 4))
 			goto exit;
 		uint32_t sei = (uint32_t)((uint8_t)readChar(&curdata)) << 24;
 		sei |= (uint32_t)((uint8_t)readChar(&curdata)) << 16;
@@ -257,7 +267,7 @@ int32_t MQTTSNDeserialize_connack(MQTTSNPacket_connackData* data,
 
 	if (data->flags.bits.serverKeepAlive)
 	{
-		if (!buf_avail(curdata, enddata, 2))
+		if (!buf_avail(curdata, endbuffer, 2))
 			goto exit;
 		data->serverKeepAlive = readInt16(&curdata);
 	}
@@ -265,20 +275,20 @@ int32_t MQTTSNDeserialize_connack(MQTTSNPacket_connackData* data,
 	if (data->flags.bits.auth)
 	{
 		/* Auth method: 1-byte length prefix then string data */
-		if (!buf_avail(curdata, enddata, 1))
+		if (!buf_avail(curdata, endbuffer, 1))
 			goto exit;
 		data->auth.method.islen8 = 1;
 		data->auth.method.len    = (uint16_t)(uint8_t)readChar(&curdata);
-		if (!buf_avail(curdata, enddata, (int32_t)data->auth.method.len))
+		if (!buf_avail(curdata, endbuffer, (int32_t)data->auth.method.len))
 			goto exit;
 		data->auth.method.data   = (char*)curdata;
 		curdata += data->auth.method.len;
 
 		/* Auth data: 2-byte length prefix then binary data */
-		if (!buf_avail(curdata, enddata, 2))
+		if (!buf_avail(curdata, endbuffer, 2))
 			goto exit;
 		data->auth.data.len  = readInt16(&curdata);
-		if (!buf_avail(curdata, enddata, (int32_t)data->auth.data.len))
+		if (!buf_avail(curdata, endbuffer, (int32_t)data->auth.data.len))
 			goto exit;
 		data->auth.data.data = curdata;
 		curdata += data->auth.data.len;
@@ -406,16 +416,26 @@ int32_t MQTTSNDeserialize_pingresp(uint16_t* packetid, int* messages_remaining,
 {
 	uint8_t  *curdata = buf;
 	uint8_t  *enddata = NULL;
+	uint8_t  *endbuffer = buf + buflen;
 	int32_t  rc = 0;
 	int32_t  mylen = 0;
+	int32_t  lenlen;
 
 	FUNC_ENTRY;
-	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
 	if (lenlen < 0)
+	{
+		rc = MQTTSNPACKET_READ_ERROR;
 		goto exit;
+	}
+	if (buflen < mylen)              /* packet longer than the supplied buffer */
+	{
+		rc = MQTTSNPACKET_BUFFER_TOO_SHORT;
+		goto exit;
+	}
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (enddata - curdata < 3)   /* type(1) + packetid(2) */
+	if (!buf_avail(curdata, endbuffer, 3))   /* type(1) + packetid(2) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_PINGRESP)

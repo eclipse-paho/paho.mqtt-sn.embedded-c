@@ -227,6 +227,7 @@ int32_t MQTTSNDeserialize_protection(MQTTSNPacket_protectionData* data,
 {
 	uint8_t  *curdata = buf;
 	uint8_t  *enddata = NULL;
+	uint8_t  *endbuffer = buf + buflen;
 	int32_t  rc = 0;
 	int32_t  mylen = 0;
 	uint8_t  counter_len_field;
@@ -235,14 +236,23 @@ int32_t MQTTSNDeserialize_protection(MQTTSNPacket_protectionData* data,
 	uint8_t  counter_bytes;
 	uint8_t  crypto_bytes;
 	uint16_t inner_pkt_len;
+	int32_t  lenlen;
 
 	FUNC_ENTRY;
-	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
 	if (lenlen < 0)
+	{
+		rc = MQTTSNPACKET_READ_ERROR;
 		goto exit;
+	}
+	if (buflen < mylen)              /* packet longer than the supplied buffer */
+	{
+		rc = MQTTSNPACKET_BUFFER_TOO_SHORT;
+		goto exit;
+	}
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (!buf_avail(curdata, enddata, 2))              /* type(1) + flags(1) */
+	if (!buf_avail(curdata, endbuffer, 2))              /* type(1) + flags(1) */
 		goto exit;
 
 	if ((uint8_t)readChar(&curdata) != MQTTSN_PROTECTION)
@@ -265,7 +275,7 @@ int32_t MQTTSNDeserialize_protection(MQTTSNPacket_protectionData* data,
 	(void)auth_tag_len_field; /* length is inferred from packet length; see below */
 
 	/* Protection Scheme (Section 3.17.3) + Sender ID (Section 3.17.4) + Random (Section 3.17.5) */
-	if (!buf_avail(curdata, enddata,
+	if (!buf_avail(curdata, endbuffer,
 	               1 + MQTTSN_PROTECTION_SENDER_ID_LEN + MQTTSN_PROTECTION_RANDOM_LEN))
 		goto exit;
 	data->scheme = (uint8_t)readChar(&curdata);
@@ -279,14 +289,14 @@ int32_t MQTTSNDeserialize_protection(MQTTSNPacket_protectionData* data,
 	curdata += MQTTSN_PROTECTION_RANDOM_LEN;
 
 	/* Cryptographic Material — zero-copy (Section 3.17.6) */
-	if (!buf_avail(curdata, enddata, (int32_t)crypto_bytes))
+	if (!buf_avail(curdata, endbuffer, (int32_t)crypto_bytes))
 		goto exit;
 	data->cryptoMaterial.len  = crypto_bytes;
 	data->cryptoMaterial.data = (crypto_bytes > 0) ? curdata : NULL;
 	curdata += crypto_bytes;
 
 	/* Monotonic Counter — zero-copy (Section 3.17.7) */
-	if (!buf_avail(curdata, enddata, (int32_t)counter_bytes))
+	if (!buf_avail(curdata, endbuffer, (int32_t)counter_bytes))
 		goto exit;
 	data->monotonicCounter.len  = counter_bytes;
 	data->monotonicCounter.data = (counter_bytes > 0) ? curdata : NULL;

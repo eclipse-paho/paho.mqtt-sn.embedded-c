@@ -157,16 +157,26 @@ int32_t MQTTSNDeserialize_unsuback(uint16_t* packetid, uint8_t* returncode,
 {
 	uint8_t  *curdata = buf;
 	uint8_t  *enddata = NULL;
+	uint8_t  *endbuffer = buf + buflen;
 	int32_t  rc = 0;
 	int32_t  mylen = 0;
+	int32_t  lenlen;
 
 	FUNC_ENTRY;
-	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
 	if (lenlen < 0)
+	{
+		rc = MQTTSNPACKET_READ_ERROR;
 		goto exit;
+	}
+	if (buflen < mylen)              /* packet longer than the supplied buffer */
+	{
+		rc = MQTTSNPACKET_BUFFER_TOO_SHORT;
+		goto exit;
+	}
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (!buf_avail(curdata, enddata, 3))              /* type(1) + packetId(2) */
+	if (!buf_avail(curdata, endbuffer, 3))              /* type(1) + packetId(2) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_UNSUBACK)

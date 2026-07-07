@@ -91,16 +91,26 @@ int32_t MQTTSNDeserialize_publish(uint8_t* dup, int32_t* qos, uint8_t* retained,
 	uint8_t  flags;
 	uint8_t  *curdata = buf;
 	uint8_t  *enddata = NULL;
+	uint8_t  *endbuffer = buf + buflen;
 	int32_t  rc = 0;
 	int32_t  mylen = 0;
+	int32_t  lenlen;
 
 	FUNC_ENTRY;
-	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
 	if (lenlen < 0)
+	{
+		rc = MQTTSNPACKET_READ_ERROR;
 		goto exit;
+	}
+	if (buflen < mylen)              /* packet longer than the supplied buffer */
+	{
+		rc = MQTTSNPACKET_BUFFER_TOO_SHORT;
+		goto exit;
+	}
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (!buf_avail(curdata, enddata, 2))              /* type(1) + flags(1) */
+	if (!buf_avail(curdata, endbuffer, 2))              /* type(1) + flags(1) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_PUBLISH)
@@ -124,7 +134,7 @@ int32_t MQTTSNDeserialize_publish(uint8_t* dup, int32_t* qos, uint8_t* retained,
 	 */
 	if (*qos > 0)
 	{
-		if (!buf_avail(curdata, enddata, 2))
+		if (!buf_avail(curdata, endbuffer, 2))
 			goto exit;
 		*packetid = readInt16(&curdata);
 	}
@@ -137,17 +147,17 @@ int32_t MQTTSNDeserialize_publish(uint8_t* dup, int32_t* qos, uint8_t* retained,
 	 */
 	if (topic->type == MQTTSN_TOPIC_TYPE_NAME)
 	{
-		if (!buf_avail(curdata, enddata, 2))
+		if (!buf_avail(curdata, endbuffer, 2))
 			goto exit;
 		topic->alt.string.len  = readInt16(&curdata);
-		if (!buf_avail(curdata, enddata, (int32_t)topic->alt.string.len))
+		if (!buf_avail(curdata, endbuffer, (int32_t)topic->alt.string.len))
 			goto exit;
 		topic->alt.string.data = (char*)curdata;    /* zero-copy into buf */
 		curdata += topic->alt.string.len;
 	}
 	else /* MQTTSN_TOPIC_TYPE_SESSION or MQTTSN_TOPIC_TYPE_PREDEFINED */
 	{
-		if (!buf_avail(curdata, enddata, 2))
+		if (!buf_avail(curdata, endbuffer, 2))
 			goto exit;
 		topic->alt.alias = readInt16(&curdata);     /* 2-byte topic alias */
 	}
@@ -179,16 +189,26 @@ int32_t MQTTSNDeserialize_puback(uint16_t* packetid, uint8_t* returncode,
 {
 	uint8_t  *curdata = buf;
 	uint8_t  *enddata = NULL;
+	uint8_t  *endbuffer = buf + buflen;
 	int32_t  rc = 0;
 	int32_t  mylen = 0;
+	int32_t  lenlen;
 
 	FUNC_ENTRY;
-	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
 	if (lenlen < 0)
+	{
+		rc = MQTTSNPACKET_READ_ERROR;
 		goto exit;
+	}
+	if (buflen < mylen)              /* packet longer than the supplied buffer */
+	{
+		rc = MQTTSNPACKET_BUFFER_TOO_SHORT;
+		goto exit;
+	}
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (!buf_avail(curdata, enddata, 3))              /* type(1) + packetId(2) */
+	if (!buf_avail(curdata, endbuffer, 3))              /* type(1) + packetId(2) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_PUBACK)
@@ -230,16 +250,26 @@ int32_t MQTTSNDeserialize_ack(uint8_t* packettype, uint16_t* packetid,
 {
 	uint8_t  *curdata = buf;
 	uint8_t  *enddata = NULL;
+	uint8_t  *endbuffer = buf + buflen;
 	int32_t  rc = 0;
 	int32_t  mylen = 0;
+	int32_t  lenlen;
 
 	FUNC_ENTRY;
-	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
 	if (lenlen < 0)
+	{
+		rc = MQTTSNPACKET_READ_ERROR;
 		goto exit;
+	}
+	if (buflen < mylen)              /* packet longer than the supplied buffer */
+	{
+		rc = MQTTSNPACKET_BUFFER_TOO_SHORT;
+		goto exit;
+	}
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (!buf_avail(curdata, enddata, 3))              /* type(1) + packetId(2) */
+	if (!buf_avail(curdata, endbuffer, 3))              /* type(1) + packetId(2) */
 		goto exit;
 
 	*packettype = (uint8_t)readChar(&curdata);
@@ -288,16 +318,26 @@ int32_t MQTTSNDeserialize_register(uint8_t* topic_alias_present, uint16_t* topic
 	uint8_t  flags;
 	uint8_t  *curdata = buf;
 	uint8_t  *enddata = NULL;
+	uint8_t  *endbuffer = buf + buflen;
 	int32_t  rc = 0;
 	int32_t  mylen = 0;
+	int32_t  lenlen;
 
 	FUNC_ENTRY;
-	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
 	if (lenlen < 0)
+	{
+		rc = MQTTSNPACKET_READ_ERROR;
 		goto exit;
+	}
+	if (buflen < mylen)              /* packet longer than the supplied buffer */
+	{
+		rc = MQTTSNPACKET_BUFFER_TOO_SHORT;
+		goto exit;
+	}
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (!buf_avail(curdata, enddata, 4))              /* type(1)+flags(1)+packetId(2) */
+	if (!buf_avail(curdata, endbuffer, 4))              /* type(1)+flags(1)+packetId(2) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_REGISTER)
@@ -315,7 +355,7 @@ int32_t MQTTSNDeserialize_register(uint8_t* topic_alias_present, uint16_t* topic
 	/* Topic Alias is present only when the Topic Alias Flag is set (Section 3.4.3) */
 	if (*topic_alias_present)
 	{
-		if (!buf_avail(curdata, enddata, 2))
+		if (!buf_avail(curdata, endbuffer, 2))
 			goto exit;
 		*topicid = readInt16(&curdata);
 	}
@@ -358,16 +398,26 @@ int32_t MQTTSNDeserialize_regack(uint8_t* topic_type, uint8_t* topic_alias_prese
 	uint8_t  flags;
 	uint8_t  *curdata = buf;
 	uint8_t  *enddata = NULL;
+	uint8_t  *endbuffer = buf + buflen;
 	int32_t  rc = 0;
 	int32_t  mylen = 0;
+	int32_t  lenlen;
 
 	FUNC_ENTRY;
-	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
 	if (lenlen < 0)
+	{
+		rc = MQTTSNPACKET_READ_ERROR;
 		goto exit;
+	}
+	if (buflen < mylen)              /* packet longer than the supplied buffer */
+	{
+		rc = MQTTSNPACKET_BUFFER_TOO_SHORT;
+		goto exit;
+	}
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (!buf_avail(curdata, enddata, 4))              /* type(1)+flags(1)+packetId(2) */
+	if (!buf_avail(curdata, endbuffer, 4))              /* type(1)+flags(1)+packetId(2) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_REGACK)
@@ -387,7 +437,7 @@ int32_t MQTTSNDeserialize_regack(uint8_t* topic_type, uint8_t* topic_alias_prese
 	/* Topic Alias is present only when the Topic Alias Flag is set (Section 3.5.4) */
 	if (*topic_alias_present)
 	{
-		if (!buf_avail(curdata, enddata, 2))
+		if (!buf_avail(curdata, endbuffer, 2))
 			goto exit;
 		*topicid = readInt16(&curdata);
 	}

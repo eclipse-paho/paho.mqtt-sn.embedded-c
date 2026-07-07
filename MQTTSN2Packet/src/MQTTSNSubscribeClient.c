@@ -168,16 +168,26 @@ int32_t MQTTSNDeserialize_suback(uint16_t* topicid, uint8_t* topic_alias_present
 	uint8_t  flags;
 	uint8_t  *curdata = buf;
 	uint8_t  *enddata = NULL;
+	uint8_t  *endbuffer = buf + buflen;
 	int32_t  rc = 0;
 	int32_t  mylen = 0;
+	int32_t  lenlen;
 
 	FUNC_ENTRY;
-	int32_t lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
+	lenlen = MQTTSNPacket_decode(curdata, buflen, &mylen); /* read length */
 	if (lenlen < 0)
+	{
+		rc = MQTTSNPACKET_READ_ERROR;
 		goto exit;
+	}
+	if (buflen < mylen)              /* packet longer than the supplied buffer */
+	{
+		rc = MQTTSNPACKET_BUFFER_TOO_SHORT;
+		goto exit;
+	}
 	curdata += lenlen;
 	enddata = buf + mylen;
-	if (!buf_avail(curdata, enddata, 4))              /* type(1)+flags(1)+packetId(2) */
+	if (!buf_avail(curdata, endbuffer, 4))              /* type(1)+flags(1)+packetId(2) */
 		goto exit;
 
 	if (readChar(&curdata) != MQTTSN_SUBACK)
@@ -196,7 +206,7 @@ int32_t MQTTSNDeserialize_suback(uint16_t* topicid, uint8_t* topic_alias_present
 	/* topic alias field is present only when the Topic Alias Flag is set */
 	if (*topic_alias_present)
 	{
-		if (!buf_avail(curdata, enddata, 2))
+		if (!buf_avail(curdata, endbuffer, 2))
 			goto exit;
 		*topicid = readInt16(&curdata);
 	}
