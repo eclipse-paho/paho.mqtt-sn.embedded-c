@@ -78,6 +78,28 @@ int32_t MQTTSNDeserialize_ack(uint8_t* packettype, uint16_t* packetid,
         uint8_t* returncode, uint8_t* buf, int32_t buflen);
 
 /*
+ * PUBWOS - Publish Without Session (Section 3.6.1)
+ *
+ * The MQTT-SN 2.0 successor to the MQTT-SN 1.2 "QoS -1" publish: a
+ * fire-and-forget publish that needs no CONNECT/Session and gets no
+ * acknowledgement, now its own packet type rather than a PUBLISH with a
+ * reserved QoS value.
+ *
+ * retained - Retain flag
+ * topic    - topic type plus alias (alt.alias) or name string (alt.string);
+ *            type MUST be MQTTSN_TOPIC_TYPE_PREDEFINED or
+ *            MQTTSN_TOPIC_TYPE_NAME (Section 3.6.1.2.1)
+ * payload  - application payload; a zero-length payload is valid
+ */
+int32_t MQTTSNSerialize_pubwos(uint8_t* buf, int32_t buflen,
+        uint8_t retained, const MQTTSN_topic* topic,
+        uint8_t* payload, int32_t payloadlen);
+
+int32_t MQTTSNDeserialize_pubwos(uint8_t* retained, MQTTSN_topic* topic,
+        uint8_t** payload, int32_t* payloadlen,
+        uint8_t* buf, int32_t buflen);
+
+/*
  * REGISTER (Section 3.4)
  *
  * topic_alias_present - 1 = include a Topic Alias field, 0 = omit it;

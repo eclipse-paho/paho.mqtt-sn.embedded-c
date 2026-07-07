@@ -73,6 +73,15 @@ TARGET_LINK_LIBRARIES(test_auth MQTTSN2Packet)
 ADD_TEST(NAME test_auth COMMAND test_auth)
 
 ADD_EXECUTABLE(
+        test_pubwos
+        test_pubwos.c
+)
+
+TARGET_LINK_LIBRARIES(test_pubwos MQTTSN2Packet)
+
+ADD_TEST(NAME test_pubwos COMMAND test_pubwos)
+
+ADD_EXECUTABLE(
         test22
         test2.c ../samples/transport.c
 )
