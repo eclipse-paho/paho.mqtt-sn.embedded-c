@@ -64,6 +64,15 @@ TARGET_LINK_LIBRARIES(test_protection MQTTSN2Packet)
 ADD_TEST(NAME test_protection COMMAND test_protection)
 
 ADD_EXECUTABLE(
+        test_auth
+        test_auth.c
+)
+
+TARGET_LINK_LIBRARIES(test_auth MQTTSN2Packet)
+
+ADD_TEST(NAME test_auth COMMAND test_auth)
+
+ADD_EXECUTABLE(
         test22
         test2.c ../samples/transport.c
 )
