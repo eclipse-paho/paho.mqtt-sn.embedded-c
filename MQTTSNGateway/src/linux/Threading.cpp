@@ -89,9 +89,20 @@ Mutex::Mutex(const char* fileName)
 
 	pthread_mutexattr_init(&attr);
 
-	if (pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED) != 0)
+#ifdef __CYGWIN__
+	if (pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE) != 0)
 	{
+		throw Exception("Mutex can't set the recursive flag", -1);
+	}
+#endif
+
+	if (pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED) != 0)
+		{
+#ifdef __CYGWIN__
+		printf("WARNING: Mutex can't set the process-shared flag\n");
+#else
 		throw Exception("Mutex can't set the process-shared flag", -1);
+#endif
 	}
 	if (pthread_mutex_init(_pmutex, &attr) != 0)
 	{
