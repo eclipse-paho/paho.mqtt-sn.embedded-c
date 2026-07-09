@@ -33,6 +33,9 @@ BrokerSendTask task5(&gateway);
 
 int main(int argc, char** argv)
 {
+    // Prevent buffering of log messages
+    setbuf(stdout, NULL);
+
     try
     {
         gateway.initialize(argc, argv);
