@@ -41,6 +41,7 @@ public:
     int  setAddress(string* data);
     int  setAddress(const char* data);
     uint16_t getPortNo(void);
+    void setPortNo(uint16_t port);
     sockaddr_in6* getIpAddress(void);
     char* getAddress(void);
     bool isMatch(SensorNetAddress* addr);
