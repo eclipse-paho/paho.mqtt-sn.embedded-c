@@ -42,6 +42,7 @@ public:
     int  setAddress(const char* data);
     uint16_t getPortNo(void);
     sockaddr_in6* getIpAddress(void);
+    uint32_t getScopeId(void);
     char* getAddress(void);
     bool isMatch(SensorNetAddress* addr);
     SensorNetAddress& operator =(SensorNetAddress& addr);
