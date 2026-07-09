@@ -303,11 +303,11 @@ void Gateway::initialize(int argc, char** argv)
     /*  Setup max PacketEventQue size  */
     _packetEventQue.setMaxSize(_params.maxInflightMsgs * _params.maxClients);
 
-    /*  Initialize adapters */
-    _adapterManager->initialize(_params.gatewayName, _params.aggregatingGw, _params.forwarder, _params.qosMinus1);
-
     /*  Setup ClientList and Predefined topics  */
     _clientList->initialize(_params.aggregatingGw);
+    
+    /*  Initialize adapters */
+    _adapterManager->initialize(_params.gatewayName, _params.aggregatingGw, _params.forwarder, _params.qosMinus1);
 
     /*  SensorNetwork initialize */
     _sensorNetwork.initialize();
