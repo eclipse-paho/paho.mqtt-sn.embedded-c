@@ -23,6 +23,7 @@ jobs:
         run: |
           git clone https://github.com/eclipse/paho.mqtt.testing.git
           cd paho.mqtt.testing/interoperability
+          git checkout develop
           python startbroker.py -c udp.conf &
       - name: Start test proxy
         run: |

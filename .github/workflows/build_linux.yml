@@ -35,7 +35,7 @@ jobs:
       - name: clean up
         run: |
           killall python || true
-          sleep  # allow broker time to terminate and report
+          sleep 3 # allow broker time to terminate and report
       - name: package
         run: |
           cd build.paho
