@@ -18,14 +18,15 @@ cmake_minimum_required(VERSION 3.12)
 
 PROJECT("paho-mqttsn2packet" C)
 
-# linux
-link_directories("/usr/local/lib")
+find_package(OpenSSL REQUIRED)
+set(SSL_LIBRARY_NAME OpenSSL)
+set(SSL_INCLUDE_DIR ${OPENSSL_INCLUDE_DIR})
+set(SSL_ROOT_DIR ${OPENSSL_ROOT_DIR})
+message(STATUS "Using ${SSL_LIBRARY_NAME} with headers at ${SSL_INCLUDE_DIR}")
 
-# Mac
-link_directories("/usr/local/opt/openssl/lib")
+link_libraries(${SSL_LIBRARY_NAME}::SSL ${SSL_LIBRARY_NAME}::Crypto)
 
-include_directories(/usr/local/include
-       /usr/local/opt/openssl/include)
+include_directories(${SSL_INCLUDE_DIR})
 
 enable_testing()
 

@@ -95,6 +95,6 @@ ADD_EXECUTABLE(
         test3.c ../samples/transport.c
 )
 
-TARGET_LINK_LIBRARIES(test23 MQTTSN2Packet ssl crypto)
+TARGET_LINK_LIBRARIES(test23 MQTTSN2Packet)
 
 ADD_TEST(NAME test23 COMMAND test23)
