@@ -1,0 +1,41 @@
+name: "Builds for Linux"
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install doxygen
+      - name: Build
+        run: |
+          rm -rf build.paho
+          mkdir build.paho
+          cd build.paho
+          echo "pwd $PWD"
+          cmake -DSENSORNET=udp ..
+          cmake --build .
+      - name: Start test broker
+        run: |
+          git clone https://github.com/eclipse/paho.mqtt.testing.git
+          cd paho.mqtt.testing/interoperability
+          python startbroker.py -c udp.conf &
+      - name: Start test proxy
+        run: |
+          python test/mqttsas.py &
+      - name: run tests
+        run: |
+          cd build.paho
+          ctest -VV --timeout 600
+      - name: clean up
+        run: |
+          killall python || true
+          sleep  # allow broker time to terminate and report
+      - name: package
+        run: |
+          cd build.paho
+          cpack --verbose
