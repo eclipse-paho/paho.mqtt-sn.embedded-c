@@ -1,5 +1,5 @@
 #*******************************************************************************
-#  Copyright (c) 2022, 2026 a1lu
+#  Copyright (c) 2022, 2026 a1lu, Ian Craggs
 #
 #  All rights reserved. This program and the accompanying materials
 #  are made available under the terms of the Eclipse Public License v2.0
@@ -77,13 +77,6 @@ ADD_LIBRARY(mqtt-sngateway_common
        ${OS}/Threading.h
        )
 
-# linux
-link_directories("/usr/local/lib")
-
-# Mac
-link_directories("/usr/local/opt/openssl/lib")
-
-
 TARGET_INCLUDE_DIRECTORIES(mqtt-sngateway_common
        PUBLIC
        .
@@ -91,7 +84,6 @@ TARGET_INCLUDE_DIRECTORIES(mqtt-sngateway_common
        ${OS}/${SENSORNET}
        ../../MQTTSNPacket/src
        /usr/local/include
-       /usr/local/opt/openssl/include
        )
 
 IF(SENSORNET MATCHES "rfcomm")
@@ -100,8 +92,6 @@ TARGET_LINK_LIBRARIES(mqtt-sngateway_common
        PRIVATE
        MQTTSNPacket
        pthread
-       ssl
-       crypto
        bluetooth
        )
 ELSE()
@@ -110,8 +100,6 @@ TARGET_LINK_LIBRARIES(mqtt-sngateway_common
        PRIVATE
        MQTTSNPacket
        pthread
-       ssl
-       crypto
        )
        
 ENDIF()
