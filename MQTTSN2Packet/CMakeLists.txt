@@ -18,6 +18,15 @@ cmake_minimum_required(VERSION 3.12)
 
 PROJECT("paho-mqttsn2packet" C)
 
+# linux
+link_directories("/usr/local/lib")
+
+# Mac
+link_directories("/usr/local/opt/openssl/lib")
+
+include_directories(/usr/local/include
+       /usr/local/opt/openssl/include)
+
 enable_testing()
 
 ADD_SUBDIRECTORY(src)
