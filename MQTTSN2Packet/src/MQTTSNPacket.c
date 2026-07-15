@@ -10,6 +10,13 @@
  * and the Eclipse Distribution License is available at
  *   http://www.eclipse.org/org/documents/edl-v10.php.
  *
+ * AI Disclosure: This file was partly AI-generated. The AI-generated
+ * portions are made available under CC0-1.0 and not subject to the
+ * project's licence. The human contributor has reviewed and verified
+ * that the code is correct.
+ *
+ * SPDX-License-Identifier: EPL-2.0 and CC0-1.0
+ *
  * Contributors:
  *    Ian Craggs - initial implementation based on MQTT-SN 1.0 code
  *******************************************************************************/
@@ -28,7 +35,7 @@ static const char* packet_names[] =
 };
 
 static const char* forwarder_packet_name = "FORWARDER_ENCAPSULATED";
-static const char* session_packet_name = "SESSION_ENCAPSULATED";
+static const char* connection_packet_name = "CONNECTION_ENCAPSULATED";
 static const char* protection_packet_name = "PROTECTION_ENCAPSULATED";
 
 /**
@@ -36,20 +43,23 @@ static const char* protection_packet_name = "PROTECTION_ENCAPSULATED";
  * @param packet_type numerical packet type
  * @return the corresponding packet name
  */
-const char* MQTTSNPacket_name(uint8_t packet_type)
+const char *MQTTSNPacket_name(uint8_t packet_type)
 {
-	const char* name = NULL;
+	const char *name = NULL;
 
-	switch(packet_type)
+	switch (packet_type)
 	{
-    case MQTTSN_FORWARDER:
-        name = forwarder_packet_name;
-	case MQTTSN_SESSION:
-		name = session_packet_name;
-	case MQTTSN_PROTECTION:
-		name = protection_packet_name;
-    default:
-		name = (packet_type >= 0 && packet_type <= MQTTSN_GWINFO) ? packet_names[packet_type] : "UNKNOWN";
+		case MQTTSN_FORWARDER:
+			name = forwarder_packet_name;
+			break;
+		case MQTTSN_CONNECTION:
+			name = connection_packet_name;
+			break;
+		case MQTTSN_PROTECTION:
+			name = protection_packet_name;
+			break;
+		default:
+			name = (packet_type >= 0 && packet_type <= MQTTSN_GWINFO) ? packet_names[packet_type] : "UNKNOWN";
 	}
 	return name;
 }

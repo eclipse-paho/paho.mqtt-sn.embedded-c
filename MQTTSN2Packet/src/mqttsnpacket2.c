@@ -60,7 +60,7 @@ static const char* packet_names[] =
 	"AUTH", "REGISTER", "REGACK",
 	"PUBWOS", "SLEEPREQ", "SLEEPRESP", "WAKEUP",
 	"ADVERTISE", "SEARCHGW", "GWINFO",
-	"FORWARDER", "SESSION", "PROTECTION"
+	"FORWARDER", "CONNECTION", "PROTECTION"
 };
 
 /**
@@ -70,11 +70,11 @@ static const char* packet_names[] =
   */
 const char* MQTTSNPacket_name(uint8_t ptype)
 {
-	if (ptype == MQTTSN_FORWARDER || ptype == MQTTSN_SESSION ||
+	if (ptype == MQTTSN_FORWARDER || ptype == MQTTSN_CONNECTION ||
 	    ptype == MQTTSN_PROTECTION)
 	{
-		return packet_names[25 + (ptype == MQTTSN_FORWARDER ? 0 :
-		                          ptype == MQTTSN_SESSION    ? 1 : 2)];
+		return packet_names[25 + (ptype == MQTTSN_FORWARDER  ? 0 :
+		                          ptype == MQTTSN_CONNECTION ? 1 : 2)];
 	}
 	return (ptype > 0 && ptype <= MQTTSN_GWINFO)
 	       ? packet_names[ptype] : "UNKNOWN";

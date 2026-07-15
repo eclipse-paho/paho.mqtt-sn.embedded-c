@@ -91,6 +91,33 @@ TARGET_LINK_LIBRARIES(test_sleep MQTTSN2Packet)
 ADD_TEST(NAME test_sleep COMMAND test_sleep)
 
 ADD_EXECUTABLE(
+        test_discovery
+        test_discovery.c
+)
+
+TARGET_LINK_LIBRARIES(test_discovery MQTTSN2Packet)
+
+ADD_TEST(NAME test_discovery COMMAND test_discovery)
+
+ADD_EXECUTABLE(
+        test_forwarder
+        test_forwarder.c
+)
+
+TARGET_LINK_LIBRARIES(test_forwarder MQTTSN2Packet)
+
+ADD_TEST(NAME test_forwarder COMMAND test_forwarder)
+
+ADD_EXECUTABLE(
+        test_connection_encapsulation
+        test_connection_encapsulation.c
+)
+
+TARGET_LINK_LIBRARIES(test_connection_encapsulation MQTTSN2Packet)
+
+ADD_TEST(NAME test_connection_encapsulation COMMAND test_connection_encapsulation)
+
+ADD_EXECUTABLE(
         test22
         test2.c ../samples/transport.c
 )

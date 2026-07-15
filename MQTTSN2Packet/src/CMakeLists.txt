@@ -25,5 +25,8 @@ ADD_LIBRARY(MQTTSN2Packet SHARED MQTTSNPacket.c
         MQTTSNAuth.c
         MQTTSNPubwos.c
         MQTTSNSleepClient.c MQTTSNSleepServer.c
+        MQTTSNDiscoveryClient.c MQTTSNDiscoveryServer.c
+        MQTTSNForwarder.c
+        MQTTSNConnectionEncapsulation.c
         MQTTSNProtection.c)
 

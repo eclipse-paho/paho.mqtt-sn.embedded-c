@@ -10,6 +10,13 @@
  * and the Eclipse Distribution License is available at
  *   http://www.eclipse.org/org/documents/edl-v10.php.
  *
+ * AI Disclosure: This file was partly AI-generated. The AI-generated
+ * portions are made available under CC0-1.0 and not subject to the
+ * project's licence. The human contributor has reviewed and verified
+ * that the code is correct.
+ *
+ * SPDX-License-Identifier: EPL-2.0 and CC0-1.0
+ *
  * Contributors:
  *    Ian Craggs - initial implementation based on the MQTT-SN 1.0 code
  *******************************************************************************/
@@ -140,7 +147,7 @@ enum MQTTSN_msgTypes
 	MQTTSN_AUTH, MQTTSN_REGISTER, MQTTSN_REGACK, MQTTSN_PUBWOS,
 	MQTTSN_SLEEPREQ, MQTTSN_SLEEPRESP, MQTTSN_WAKEUP,
 	MQTTSN_ADVERTISE, MQTTSN_SEARCHGW, MQTTSN_GWINFO,
-	MQTTSN_FORWARDER = 0xFD, MQTTSN_SESSION, MQTTSN_PROTECTION
+	MQTTSN_FORWARDER = 0xFD, MQTTSN_CONNECTION, MQTTSN_PROTECTION
 };
 
 typedef struct MQTTSN_data MQTTSN_data;
