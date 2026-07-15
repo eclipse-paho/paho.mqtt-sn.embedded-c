@@ -82,6 +82,15 @@ TARGET_LINK_LIBRARIES(test_pubwos MQTTSN2Packet)
 ADD_TEST(NAME test_pubwos COMMAND test_pubwos)
 
 ADD_EXECUTABLE(
+        test_sleep
+        test_sleep.c
+)
+
+TARGET_LINK_LIBRARIES(test_sleep MQTTSN2Packet)
+
+ADD_TEST(NAME test_sleep COMMAND test_sleep)
+
+ADD_EXECUTABLE(
         test22
         test2.c ../samples/transport.c
 )

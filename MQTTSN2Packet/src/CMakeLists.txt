@@ -24,5 +24,6 @@ ADD_LIBRARY(MQTTSN2Packet SHARED MQTTSNPacket.c
         MQTTSNUnsubscribeClient.c MQTTSNUnsubscribeServer.c
         MQTTSNAuth.c
         MQTTSNPubwos.c
+        MQTTSNSleepClient.c MQTTSNSleepServer.c
         MQTTSNProtection.c)
 
