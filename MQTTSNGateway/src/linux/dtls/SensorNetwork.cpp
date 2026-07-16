@@ -262,20 +262,22 @@ char* SensorNetAddress::sprint(char *buf)
     if (_ipAddr.af == AF_INET)
     {
         ptr = inet_ntoa(_ipAddr.addr.ad4);
-        sprintf(buf, "%s:", ptr);
+        int n = snprintf(buf, 128, "%s:", ptr);
+        n += snprintf(buf + n, 128 - n, "%d", ntohs(_portNo));
+        snprintf(buf + n, 128 - n, " index=%d", _pfdsIndex);
     }
     else if (_ipAddr.af == AF_INET6)
     {
         inet_ntop(AF_INET6, (const void*) &_ipAddr.addr.ad6, ptr, INET6_ADDRSTRLEN);
-        sprintf(buf, "[%s]:", ptr);
+        int n = snprintf(buf, 128, "[%s]:", ptr);
+        n += snprintf(buf + n, 128 - n, "%d", ntohs(_portNo));
+        snprintf(buf + n, 128 - n, " index=%d", _pfdsIndex);
     }
     else
     {
         *buf = 0;
         return buf;
     }
-    sprintf(buf + strlen(buf), "%d", ntohs(_portNo));
-    sprintf(buf + strlen(buf), " index=%d", _pfdsIndex);
     return buf;
 }
 

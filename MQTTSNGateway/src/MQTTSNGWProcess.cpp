@@ -126,7 +126,7 @@ void Process::putLog(const char* format, ...)
     _mt.lock();
     va_list arg;
     va_start(arg, format);
-    vsprintf(_rbdata, format, arg);
+    vsnprintf(_rbdata, sizeof(_rbdata), format, arg);
     va_end(arg);
     if (strlen(_rbdata))
     {

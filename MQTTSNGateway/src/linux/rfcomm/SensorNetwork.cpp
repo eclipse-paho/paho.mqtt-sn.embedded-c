@@ -130,7 +130,8 @@ SensorNetAddress& SensorNetAddress::operator =(SensorNetAddress& addr)
 char* SensorNetAddress::sprint(char* buf)
 {
     ba2str(const_cast<bdaddr_t*>(&_bdAddr), buf);
-    sprintf(buf + strlen(buf), ".%d", _channel);
+    size_t n = strlen(buf);
+    snprintf(buf + n, 128 - n, ".%d", _channel);
     return buf;
 }
 

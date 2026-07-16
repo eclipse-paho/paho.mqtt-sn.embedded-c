@@ -23,7 +23,6 @@
 #include "Timer.h"
 #include "MQTTSNGWDefines.h"
 
-using namespace std;
 using namespace MQTTSNGW;
 
 /*=====================================
@@ -38,7 +37,7 @@ const char* currentDateTime()
 	gettimeofday(&now, 0);
 	tstruct = *localtime(&now.tv_sec);
 	strftime(theCurrentTime, sizeof(theCurrentTime), "%Y%m%d %H%M%S", &tstruct);
-	sprintf(theCurrentTime + 15, ".%03d", (int)now.tv_usec / 1000 );
+	snprintf(theCurrentTime + 15, sizeof(theCurrentTime) - 15, ".%03d", (int)now.tv_usec / 1000);
 	return theCurrentTime;
 }
 
@@ -202,12 +201,12 @@ void LightIndicator::pinMode(int gpioNo)
 	}
 	char no[4];
 
-	sprintf(no,"%d", gpioNo);
+	snprintf(no, sizeof(no), "%d", gpioNo);
 	rc = write(fd, no, strlen(no));
 	close(fd);
 
 	char fileName[64];
-	sprintf( fileName, "/sys/class/gpio/gpio%d/direction", gpioNo);
+	snprintf(fileName, sizeof(fileName), "/sys/class/gpio/gpio%d/direction", gpioNo);
 
 	fd = open(fileName, O_WRONLY);
 	if ( fd < 0 )
@@ -216,7 +215,7 @@ void LightIndicator::pinMode(int gpioNo)
 	}
 	rc = write(fd,"out", 3);
 	close(fd);
-	sprintf( fileName, "/sys/class/gpio/gpio%d/value", gpioNo);
+	snprintf(fileName, sizeof(fileName), "/sys/class/gpio/gpio%d/value", gpioNo);
 	fd = open(fileName, O_WRONLY);
 	if ( fd > 0 )
 	{

@@ -41,7 +41,7 @@ void TestTree23::test(void)
 	for ( int i = 0; i < N; i++)
 	{
 		char buff[5];
-		sprintf(buff,"%d", i);
+		snprintf(buff, sizeof(buff), "%d", i);
 		r1[i] = new Key(string(buff));
 		r2[i] = new Integer(i);
 		this->add(r1[i], r2[i]);

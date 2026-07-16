@@ -135,8 +135,7 @@ SensorNetAddress& SensorNetAddress::operator =(SensorNetAddress& addr)
 
 char* SensorNetAddress::sprint(char* buf)
 {
-    sprintf(buf, "[%s]:", getAddress());
-    sprintf(buf + strlen(buf), "%d", ntohs(_IpAddr.sin6_port));
+    snprintf(buf, 128, "[%s]:%d", getAddress(), ntohs(_IpAddr.sin6_port));
     return buf;
 }
 

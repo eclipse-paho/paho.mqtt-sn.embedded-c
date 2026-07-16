@@ -85,7 +85,7 @@ char* SensorNetAddress::sprint(char* buf)
 	char* pbuf = buf;
 	for ( int i = 0; i < 8; i++ )
 	{
-		sprintf(pbuf, "%02X", _address64[i]);
+		snprintf(pbuf, 3, "%02X", _address64[i]);
 		pbuf += 2;
 	}
 	return buf;
@@ -131,7 +131,7 @@ void SensorNetwork::initialize(void)
 	}
 	setApiMode(apimode);
 	_description = "API mode ";
-	sprintf(param, "%d", apimode);
+	snprintf(param, sizeof(param), "%d", apimode);
 	_description += param;
 
 	if (theProcess->getParam("Baudrate", param) == 0)
@@ -139,7 +139,7 @@ void SensorNetwork::initialize(void)
 		baudrate = (uint32_t)atoi(param);
 	}
 	_description += ", Baudrate ";
-	sprintf(param ,"%d", baudrate);
+	snprintf(param, sizeof(param), "%d", baudrate);
 	_description += param;
 
 	theProcess->getParam("SerialDevice", param);

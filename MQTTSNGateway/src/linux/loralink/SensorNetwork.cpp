@@ -87,7 +87,7 @@ SensorNetAddress& SensorNetAddress::operator =(SensorNetAddress& addr)
 
 char* SensorNetAddress::sprint(char* buf)
 {
-		sprintf( buf, "%d", _devAddr);
+		snprintf(buf, 128, "%d", _devAddr);
 	return buf;
 }
 
@@ -129,7 +129,7 @@ void SensorNetwork::initialize(void)
 		baudrate = (uint32_t)atoi(param);
 	}
 	_description += "LoRaLink, Baudrate ";
-	sprintf(param ,"%d", baudrate);
+	snprintf(param, sizeof(param), "%d", baudrate);
 	_description += param;
 
 	theProcess->getParam("DeviceRxLoRaLink", param);

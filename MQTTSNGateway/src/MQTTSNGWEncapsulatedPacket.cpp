@@ -166,7 +166,7 @@ char* MQTTSNGWEncapsulatedPacket::print(char* pbuf)
 
     for (int i = 1; i < size; i++)
     {
-        sprintf(*pptr, " %02X", *(buf + i));
+        snprintf(*pptr, 4, " %02X", *(buf + i));
         *pptr += 3;
     }
     **pptr = 0;
