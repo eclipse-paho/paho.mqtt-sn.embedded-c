@@ -130,6 +130,13 @@ void ClientRecvTask::run()
             {
                 WRITELOG("%s ClientRecvTask: PROTECTION validation failed from %s%s\n",
                          ERRMSG_HEADER, senderAddr.sprint(buf), ERRMSG_FOOTER);
+
+                /* Reject with DISCONNECT(Protection Scheme Invalid), Section 3.17 */
+                MQTTSNPacket* disconnectPacket = new MQTTSNPacket();
+                disconnectPacket->setDISCONNECT(MQTT_SN_RC_PROTECTION_SCHEME_INVALID);
+                disconnectPacket->unicast(_sensorNetwork, &senderAddr);
+                delete disconnectPacket;
+
                 delete packet;
                 continue;
             }

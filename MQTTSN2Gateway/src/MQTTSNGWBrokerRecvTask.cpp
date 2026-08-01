@@ -103,7 +103,9 @@ void BrokerRecvTask::run(void)
 
         if (maxSock == 0)
         {
-            usleep(500 * 1000);
+            /* No broker connections open yet; poll frequently so a newly
+             * connecting client's CONNACK isn't held up behind this sleep. */
+            usleep(20 * 1000);
         }
         else
         {
