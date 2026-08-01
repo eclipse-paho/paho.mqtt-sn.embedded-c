@@ -5,7 +5,7 @@ set -e
 rm -rf build.paho
 mkdir build.paho
 cd build.paho
-cmake .. -DSENSORNET=loralink
+cmake .. -DSENSORNET=udp
 make
 ctest -VV --timeout 600
 #cmake .. -DSENSORNET=rfcomm
@@ -16,13 +16,13 @@ ctest -VV --timeout 600
 #make MQTT-SNGateway
 #cmake .. -DSENSORNET=dtls
 #make MQTT-SNGateway
-#cmake .. -DSENSORNET=udp
+#cmake .. -DSENSORNET=loralink
 #make MQTT-SNGateway
-#cd ../MQTTSNGateway/GatewayTester
-#make SENSORNET=UDP6
-#make SENSORNET=DTLS
-#make SENSORNET=DTLS6
-#make SENSORNET=RFCOMM
-#make SENSORNET=UDP
+cd ../MQTTSNGateway/GatewayTester
+#make SN=UDP6
+#make SN=DTLS
+#make SN=DTLS6
+#make SN=RFCOMM
+make SN=UDP
 
 
