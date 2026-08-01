@@ -929,7 +929,7 @@ int test5(struct Options options)
 	assert("Corrupted PROTECTION packet sent", rc == 0, "rc was %d\n", rc);
 	if (rc != 0) goto close;
 
-	/* Expect rejection: DISCONNECT or timeout (no response) */
+	/* Expect rejection: DISCONNECT(Protection Scheme Invalid) or timeout (no response) */
 	rlen = transport_getdata(rbuf, (int)sizeof(rbuf));
 
 	if (rlen <= 0)
@@ -944,10 +944,19 @@ int test5(struct Options options)
 		ptype = packet_type_in_buf(rbuf, rlen);
 		assert("Not CONNACK with bad auth tag", ptype != MQTTSN_CONNACK,
 		       "received CONNACK despite corrupted auth tag\n", 0);
+		assert("Response is DISCONNECT", ptype == MQTTSN_DISCONNECT,
+		       "received packet type 0x%02X\n", ptype);
 		if (ptype == MQTTSN_DISCONNECT)
-			MyLog(LOGA_DEBUG, "DISCONNECT received: server rejected bad auth tag");
-		else
-			MyLog(LOGA_DEBUG, "Received unexpected packet type 0x%02X", ptype);
+		{
+			MQTTSNPacket_disconnectData discdata;
+			rc = MQTTSNDeserialize_disconnect(&discdata, rbuf, rlen);
+			assert("DISCONNECT deserialized", rc == 1, "rc was %d\n", rc);
+			assert("DISCONNECT reason code is Protection Scheme Invalid",
+			       discdata.reasonCode == MQTT_SN_RC_PROTECTION_SCHEME_INVALID,
+			       "reason code was 0x%02X\n", discdata.reasonCode);
+			MyLog(LOGA_DEBUG, "DISCONNECT received: server rejected bad auth tag (reason=0x%02X)",
+			      discdata.reasonCode);
+		}
 	}
 
 close:
