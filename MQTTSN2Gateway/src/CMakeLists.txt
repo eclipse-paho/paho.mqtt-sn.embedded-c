@@ -85,7 +85,6 @@ TARGET_INCLUDE_DIRECTORIES(mqtt-sn2gateway_common
        ${OS}/${SENSORNET}
        ../../MQTTSN2Packet/src
        /usr/local/include
-       /opt/homebrew/opt/openssl@3/include
        )
 
 IF(SENSORNET MATCHES "rfcomm")
@@ -95,7 +94,7 @@ TARGET_LINK_LIBRARIES(mqtt-sn2gateway_common
        MQTTSN2Packet
        pthread
        bluetooth
-       /opt/homebrew/opt/openssl@3/lib/libcrypto.dylib
+       OpenSSL::Crypto
        )
 ELSE()
 
@@ -103,7 +102,7 @@ TARGET_LINK_LIBRARIES(mqtt-sn2gateway_common
        PRIVATE
        MQTTSN2Packet
        pthread
-       /opt/homebrew/opt/openssl@3/lib/libcrypto.dylib
+       OpenSSL::Crypto
        )
 
 ENDIF()
@@ -123,7 +122,6 @@ TARGET_INCLUDE_DIRECTORIES(MQTT-SN2Gateway
         ${OS}/${SENSORNET}
         ../../MQTTSN2Packet/src
         /usr/local/include
-        /opt/homebrew/opt/openssl@3/include
 )
 
 ADD_EXECUTABLE(MQTT-SN2Logmonitor
