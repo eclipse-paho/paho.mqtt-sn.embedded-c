@@ -134,3 +134,37 @@ ADD_EXECUTABLE(
 TARGET_LINK_LIBRARIES(test23 MQTTSN2Packet)
 
 ADD_TEST(NAME test23 COMMAND test23)
+
+# test22/test23 exercise MQTTSN2Packet directly against a live MQTT-SN 2.0 UDP
+# broker (paho.mqtt.testing, run with its udp.conf - native MQTT-SN support,
+# no gateway involved). The broker is auto-cloned from GitHub (if not already
+# present) and started/stopped automatically via a ctest fixture, so the
+# build is self-sufficient on a clean machine with no pre-installed broker.
+# Point at an existing checkout instead (skips the auto-clone) by overriding
+# on the cmake command line:
+#   -DPAHO_MQTT_TESTING_DIR=/path/to/interoperability
+set(PAHO_MQTT_TESTING_DIR
+    "${CMAKE_BINARY_DIR}/paho-mqtt-testing/interoperability"
+    CACHE PATH "paho.mqtt.testing interoperability broker directory (auto-cloned from GitHub here if missing)")
+
+set(SN_BROKER_PID_FILE "${CMAKE_CURRENT_BINARY_DIR}/sn_broker.pid")
+
+add_test(NAME sn_broker_start
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/start-broker.sh
+        ${PAHO_MQTT_TESTING_DIR}
+        udp.conf
+        ${SN_BROKER_PID_FILE}
+        1883)
+set_tests_properties(sn_broker_start PROPERTIES
+    FIXTURES_SETUP MQTTSN2Packet_broker_fixture
+    TIMEOUT 15)
+
+add_test(NAME sn_broker_stop
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/stop-broker.sh
+        ${SN_BROKER_PID_FILE})
+set_tests_properties(sn_broker_stop PROPERTIES
+    FIXTURES_CLEANUP MQTTSN2Packet_broker_fixture)
+
+set_tests_properties(test22 test23 PROPERTIES
+    FIXTURES_REQUIRED MQTTSN2Packet_broker_fixture
+    TIMEOUT 120)

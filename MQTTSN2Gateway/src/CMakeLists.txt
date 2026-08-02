@@ -156,13 +156,15 @@ ADD_TEST(NAME test2PFW
 # These tests are only registered when the MQTTSN2Packet test targets exist
 # (i.e. when building from the top-level CMakeLists.txt).
 #
-# The broker is started automatically from PAHO_MQTT_TESTING_DIR using:
+# The broker is auto-cloned from GitHub (if not already present) and started
+# automatically from PAHO_MQTT_TESTING_DIR using:
 #   python3 startbroker.py -c localhost_testing.conf
-# Override on the cmake command line: -DPAHO_MQTT_TESTING_DIR=/path/to/broker
+# Point at an existing checkout instead (skips the auto-clone) by overriding
+# on the cmake command line: -DPAHO_MQTT_TESTING_DIR=/path/to/broker
 if(TARGET test22)
     set(PAHO_MQTT_TESTING_DIR
-        "$ENV{HOME}/git/paho.mqtt.testing/interoperability"
-        CACHE PATH "paho.mqtt.testing interoperability broker directory")
+        "${CMAKE_BINARY_DIR}/paho-mqtt-testing/interoperability"
+        CACHE PATH "paho.mqtt.testing interoperability broker directory (auto-cloned from GitHub here if missing)")
 
     set(GW2_PID_FILE "${CMAKE_CURRENT_BINARY_DIR}/gateway2.pid")
     set(GW2_BROKER_PID_FILE "${CMAKE_CURRENT_BINARY_DIR}/broker2.pid")

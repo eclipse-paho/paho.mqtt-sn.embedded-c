@@ -19,16 +19,6 @@ jobs:
           echo "pwd $PWD"
           cmake -DSENSORNET=udp ..
           cmake --build .
-      - name: Start test broker
-        run: |
-          git clone https://github.com/eclipse/paho.mqtt.testing.git
-          cd paho.mqtt.testing/interoperability
-          git checkout develop
-          pip install cryptography
-          python startbroker.py -c udp.conf &
-      - name: Start test proxy
-        run: |
-          python test/mqttsas.py &
       - name: run tests
         run: |
           cd build.paho

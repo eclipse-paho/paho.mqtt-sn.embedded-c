@@ -9,8 +9,12 @@ GW_PID_FILE="$3"
 BROKER_DIR="$4"
 BROKER_PID_FILE="$5"
 
+# --- Auto-clone the broker from GitHub and provision its venv if not already present ---
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+"$SCRIPT_DIR/../../../scripts/ensure-paho-mqtt-testing.sh" "$BROKER_DIR"
+
 # --- Start MQTT broker ---
-# Use the uv-managed Python 3.12 venv if present; fall back to plain python3.
+# Use the venv provisioned above if present; fall back to plain python3.
 cd "$BROKER_DIR"
 if [ -x ".venv/bin/python3" ]; then
     PYTHON=".venv/bin/python3"
@@ -28,6 +32,17 @@ if ! kill -0 "$BROKER_PID" 2>/dev/null; then
     exit 1
 fi
 echo "Broker started (PID=$BROKER_PID)"
+
+# --- Free the gateway's UDP port, in case a stray process is still on it ---
+GW_UDP_PORT=$(grep -E '^GatewayPortNo=' "$GW_CONF" | cut -d= -f2 | tr -d '[:space:]')
+if [ -n "$GW_UDP_PORT" ]; then
+    STALE_PIDS=$(lsof -tiUDP:"$GW_UDP_PORT" 2>/dev/null || true)
+    if [ -n "$STALE_PIDS" ]; then
+        echo "Stopping stale process(es) on UDP port $GW_UDP_PORT: $STALE_PIDS"
+        kill -9 $STALE_PIDS 2>/dev/null || true
+        sleep 1
+    fi
+fi
 
 # --- Start MQTT-SN 2.0 gateway ---
 "$GW_BIN" -f "$GW_CONF" > /tmp/mqttsn2-test-gateway.log 2>&1 &
